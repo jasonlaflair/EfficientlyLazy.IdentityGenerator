@@ -8,6 +8,29 @@ using EfficientlyLazy.IdentityGenerator.Entity;
 
 namespace EfficientlyLazy.IdentityGenerator
 {
+    internal static class IdentityElementFlagExtensions
+    {
+        public static IdentityElementFlags All()
+        {
+            return IdentityElementFlags.Name | IdentityElementFlags.Address | IdentityElementFlags.SSN | IdentityElementFlags.DOB;
+        }
+
+        public static bool HasFlag(this IdentityElementFlags current, IdentityElementFlags check)
+        {
+            return ((current & check) == check);
+        }
+    }
+
+    [Flags]
+    public enum IdentityElementFlags
+    {
+        None = 0,
+        Name = 1,
+        Address = 2,
+        SSN = 4,
+        DOB = 8
+    }
+
     public static class Generator
     {
         private enum NameGender
@@ -226,25 +249,37 @@ namespace EfficientlyLazy.IdentityGenerator
 
         public static Identity GenerateIdentity()
         {
-            return GenerateIdentity(true);
+            return GenerateIdentity(IdentityElementFlagExtensions.All());
         }
 
-        public static Identity GenerateIdentity(bool withAddress)
+        public static Identity GenerateIdentity(IdentityElementFlags elements)
         {
-            var firstName = FirstNames.GetRandom();
-            var middleName = FirstNames.GetRandom(x => x.Gender == firstName.Gender);
-            var last = LastNames.GetRandom();
+            var firstName = string.Empty;
+            var middleName = string.Empty;
+            var lastName = string.Empty;
+            var gender = string.Empty;
 
-            var ssn = GenerateSSN();
-            var dob = GenerateDOB(18, 100);
-            Address address = withAddress ? GenerateAddress() : null;
+            if (elements.HasFlag(IdentityElementFlags.Name))
+            {
+                var first = FirstNames.GetRandom();
+                var middle = FirstNames.GetRandom(x => x.Gender == first.Gender);
+
+                firstName = first.Name.ToProperCase();
+                middleName = middle.Name.ToProperCase();
+                lastName = LastNames.GetRandom().ToProperCase();
+                gender = first.Gender.ToString();
+            }
+
+            var ssn = elements.HasFlag(IdentityElementFlags.SSN) ? GenerateSSN() : string.Empty;
+            var dob = elements.HasFlag(IdentityElementFlags.DOB) ? GenerateDOB(18, 100) : DateTime.MinValue;
+            var address = elements.HasFlag(IdentityElementFlags.Address) ? GenerateAddress() : null;
 
             return new Identity
                        {
-                           First = firstName.Name.ToProperCase(),
-                           Middle = middleName.Name.ToProperCase(),
-                           Last = last.ToProperCase(),
-                           Gender = firstName.Gender.ToString(),
+                           First = firstName,
+                           Middle = middleName,
+                           Last = lastName,
+                           Gender = gender,
                            SSN = ssn,
                            DOB = dob,
                            Address = address
@@ -259,11 +294,11 @@ namespace EfficientlyLazy.IdentityGenerator
             }
         }
 
-        public static IEnumerable<Identity> GenerateIdentities(int number, bool withAddress)
+        public static IEnumerable<Identity> GenerateIdentities(int number, IdentityElementFlags elements)
         {
             for (var i = 0; i < number; i++)
             {
-                yield return GenerateIdentity(withAddress);
+                yield return GenerateIdentity(elements);
             }
         }
 
