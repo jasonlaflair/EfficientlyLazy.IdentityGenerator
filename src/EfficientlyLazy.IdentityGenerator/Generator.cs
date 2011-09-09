@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Reflection;
 using EfficientlyLazy.IdentityGenerator.Entity;
@@ -15,15 +16,10 @@ namespace EfficientlyLazy.IdentityGenerator
             Male
         }
 
-        private class FirstName : IComparable<FirstName>
+        private class FirstName
         {
             public string Name { get; set; }
             public NameGender Gender { get; set; }
-
-            public int CompareTo(FirstName other)
-            {
-                return Name.Equals(other.Name) ? Gender.CompareTo(other.Gender) : Name.CompareTo(other.Name);
-            }
         }
 
         private class CityStateZip
@@ -62,100 +58,111 @@ namespace EfficientlyLazy.IdentityGenerator
         {
             string line;
 
-            using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("EfficientlyLazy.IdentityGenerator.DataFiles.NamesFirst.txt"))
+            using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("EfficientlyLazy.IdentityGenerator.DataFiles.NamesFirst.data"))
             {
                 if (stream == null)
                 {
                     throw new InvalidOperationException("NamesFirst.txt Embedded Resource Not Found");
                 }
 
-                using (var sr = new StreamReader(stream))
+                using (var cr = new GZipStream(stream, CompressionMode.Decompress))
                 {
-                    while ((line = sr.ReadLine()) != null)
+                    using (var sr = new StreamReader(cr))
                     {
-                        var parts = line.Split('|');
-
-                        switch (parts[1])
+                        while ((line = sr.ReadLine()) != null)
                         {
-                            case "M": // Male
-                                FirstNames.Add(new FirstName
+                            var parts = line.Split('|');
+
+                            switch (parts[1])
+                            {
+                                case "M": // Male
+                                    FirstNames.Add(new FirstName
                                                        {
                                                            Gender = NameGender.Male,
                                                            Name = parts[0]
                                                        });
-                                break;
-                            case "F": // Female
-                                FirstNames.Add(new FirstName
+                                    break;
+                                case "F": // Female
+                                    FirstNames.Add(new FirstName
                                                        {
                                                            Gender = NameGender.Female,
                                                            Name = parts[0]
                                                        });
-                                break;
-                            case "B": // Male or Female
-                                FirstNames.Add(new FirstName
+                                    break;
+                                case "B": // Male or Female
+                                    FirstNames.Add(new FirstName
                                                        {
                                                            Gender = NameGender.Male,
                                                            Name = parts[0]
                                                        });
-                                FirstNames.Add(new FirstName
+                                    FirstNames.Add(new FirstName
                                                        {
                                                            Gender = NameGender.Female,
                                                            Name = parts[0]
                                                        });
-                                break;
-                            default:
-                                throw new InvalidOperationException(string.Format("Invalid Line: '{0}'", line));
+                                    break;
+                                default:
+                                    throw new InvalidOperationException(string.Format("Invalid Line: '{0}'", line));
+                            }
                         }
                     }
                 }
             }
 
-            FirstNames.Sort();
-
-            using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("EfficientlyLazy.IdentityGenerator.DataFiles.NamesLast.txt"))
+            using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("EfficientlyLazy.IdentityGenerator.DataFiles.NamesLast.data"))
             {
                 if (stream == null)
                 {
                     throw new InvalidOperationException("NamesLast.txt Embedded Resource Not Found");
                 }
 
-                using (var sr = new StreamReader(stream))
+                using (var cr = new GZipStream(stream, CompressionMode.Decompress))
                 {
-                    while ((line = sr.ReadLine()) != null)
+                    using (var sr = new StreamReader(cr))
                     {
-                        LastNames.Add(line);
+                        while ((line = sr.ReadLine()) != null)
+                        {
+                            LastNames.Add(line);
+                        }
                     }
                 }
             }
 
-            using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("EfficientlyLazy.IdentityGenerator.DataFiles.CityStateZips.txt"))
+            using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("EfficientlyLazy.IdentityGenerator.DataFiles.CityStateZips.data"))
             {
                 if (stream == null)
                 {
                     throw new InvalidOperationException("CityStateZips.txt Embedded Resource Not Found");
                 }
 
-                using (var sr = new StreamReader(stream))
+                using (var cr = new GZipStream(stream, CompressionMode.Decompress))
                 {
-                    while ((line = sr.ReadLine()) != null)
+                    using (var sr = new StreamReader(cr))
                     {
-                        var parts = line.Split('|');
+                        while ((line = sr.ReadLine()) != null)
+                        {
+                            var parts = line.Split('|');
 
-                        var stateName = parts[0];
-                        var city = parts[2];
-                        var stateAbbreviation = parts[1];
-                        var zip = parts[3];
+                            var stateName = parts[0];
+                            var city = parts[2];
+                            var stateAbbreviation = parts[1];
+                            var zip = parts[3];
 
-                        CityStateZips.Add(new CityStateZip
-                                              {
-                                                  City = city,
-                                                  StateAbbreviation = stateAbbreviation,
-                                                  StateName = stateName,
-                                                  ZipCode = zip
-                                              });
+                            CityStateZips.Add(new CityStateZip
+                                                  {
+                                                      City = city,
+                                                      StateAbbreviation = stateAbbreviation,
+                                                      StateName = stateName,
+                                                      ZipCode = zip
+                                                  });
+                        }
                     }
                 }
             }
+
+            FirstNames = FirstNames.OrderBy(x => x.Name).ToList();
+            LastNames = LastNames.OrderBy(x => x).ToList();
+            CityStateZips = CityStateZips.OrderBy(x => x.StateAbbreviation).ThenBy(x => x.City).ToList();
 
             Random = new Random(DateTime.Now.Millisecond);
         }
@@ -219,13 +226,18 @@ namespace EfficientlyLazy.IdentityGenerator
 
         public static Identity GenerateIdentity()
         {
+            return GenerateIdentity(true);
+        }
+
+        public static Identity GenerateIdentity(bool withAddress)
+        {
             var firstName = FirstNames.GetRandom();
             var middleName = FirstNames.GetRandom(x => x.Gender == firstName.Gender);
             var last = LastNames.GetRandom();
 
             var ssn = GenerateSSN();
             var dob = GenerateDOB(18, 100);
-            var address = GenerateAddress();
+            Address address = withAddress ? GenerateAddress() : null;
 
             return new Identity
                        {
@@ -235,11 +247,7 @@ namespace EfficientlyLazy.IdentityGenerator
                            Gender = firstName.Gender.ToString(),
                            SSN = ssn,
                            DOB = dob,
-                           Address = address.AddressLine,
-                           City = address.City.ToProperCase(),
-                           StateAbbreviation = address.StateAbbreviation,
-                           StateName = address.StateName.ToProperCase(),
-                           ZipCode = address.ZipCode
+                           Address = address
                        };
         }
 
@@ -247,8 +255,15 @@ namespace EfficientlyLazy.IdentityGenerator
         {
             for (var i = 0; i < number; i++)
             {
-                
                 yield return GenerateIdentity();
+            }
+        }
+
+        public static IEnumerable<Identity> GenerateIdentities(int number, bool withAddress)
+        {
+            for (var i = 0; i < number; i++)
+            {
+                yield return GenerateIdentity(withAddress);
             }
         }
 

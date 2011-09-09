@@ -45,9 +45,14 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="DataFiles\CityStateZips.txt" />
-    <EmbeddedResource Include="DataFiles\NamesFirst.txt" />
-    <EmbeddedResource Include="DataFiles\NamesLast.txt" />
+    <Content Include="DataFiles\CityStateZips.txt" />
+    <Content Include="DataFiles\NamesFirst.txt" />
+    <Content Include="DataFiles\NamesLast.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="DataFiles\CityStateZips.data" />
+    <None Include="DataFiles\NamesFirst.data" />
+    <None Include="DataFiles\NamesLast.data" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
