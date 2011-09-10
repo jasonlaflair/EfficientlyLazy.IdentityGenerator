@@ -8,41 +8,14 @@ using EfficientlyLazy.IdentityGenerator.Entity;
 
 namespace EfficientlyLazy.IdentityGenerator
 {
-    internal static class IdentityElementFlagExtensions
+    public class Generator
     {
-        public static IdentityElementFlags All()
-        {
-            return IdentityElementFlags.Name | IdentityElementFlags.Address | IdentityElementFlags.SSN | IdentityElementFlags.DOB;
-        }
-
-        public static bool HasFlag(this IdentityElementFlags current, IdentityElementFlags check)
-        {
-            return ((current & check) == check);
-        }
-    }
-
-    [Flags]
-    public enum IdentityElementFlags
-    {
-        None = 0,
-        Name = 1,
-        Address = 2,
-        SSN = 4,
-        DOB = 8
-    }
-
-    public static class Generator
-    {
-        private enum NameGender
-        {
-            Female,
-            Male
-        }
-
+        #region Pre-Processing
+        
         private class FirstName
         {
             public string Name { get; set; }
-            public NameGender Gender { get; set; }
+            public Gender Gender { get; set; }
         }
 
         private class CityStateZip
@@ -75,7 +48,7 @@ namespace EfficientlyLazy.IdentityGenerator
                                                                   "NE"
                                                               };
 
-        public static readonly Random Random;
+        internal static readonly Random Random;
 
         static Generator()
         {
@@ -101,26 +74,26 @@ namespace EfficientlyLazy.IdentityGenerator
                                 case "M": // Male
                                     FirstNames.Add(new FirstName
                                                        {
-                                                           Gender = NameGender.Male,
+                                                           Gender = Gender.Male,
                                                            Name = parts[0]
                                                        });
                                     break;
                                 case "F": // Female
                                     FirstNames.Add(new FirstName
                                                        {
-                                                           Gender = NameGender.Female,
+                                                           Gender = Gender.Female,
                                                            Name = parts[0]
                                                        });
                                     break;
                                 case "B": // Male or Female
                                     FirstNames.Add(new FirstName
                                                        {
-                                                           Gender = NameGender.Male,
+                                                           Gender = Gender.Male,
                                                            Name = parts[0]
                                                        });
                                     FirstNames.Add(new FirstName
                                                        {
-                                                           Gender = NameGender.Female,
+                                                           Gender = Gender.Female,
                                                            Name = parts[0]
                                                        });
                                     break;
@@ -189,6 +162,174 @@ namespace EfficientlyLazy.IdentityGenerator
 
             Random = new Random(DateTime.Now.Millisecond);
         }
+        
+        #endregion
+
+        public static IGeneratorOptions SetOptions()
+        {
+            return new GeneratorOptions();
+        }
+
+        private class GeneratorOptions : IGeneratorOptions
+        {
+            private bool _includeSSN = DEFAULT_INCLUDE_SSN;
+            private bool _includeDOB = DEFAULT_INCLUDE_DOB;
+            private bool _includeAddress = DEFAULT_INCLUDE_ADDRESS;
+            private bool _includeMale = DEFAULT_INCLUDE_MALE;
+            private bool _includeFemale = DEFAULT_INCLUDE_FEMALE;
+
+            private int _minimumAge = DEFAULT_MINIMUM_AGE;
+            private int _maximumAge = DEFAULT_MAXIMUM_AGE;
+
+            public IGeneratorOptions IncludeSSN()
+            {
+                return IncludeSSN(true);
+            }
+
+            public IGeneratorOptions IncludeSSN(bool include)
+            {
+                _includeSSN = include;
+                return this;
+            }
+
+            public IGeneratorOptions IncludeDOB()
+            {
+                return IncludeDOB(true);
+            }
+
+            public IGeneratorOptions IncludeDOB(bool include)
+            {
+                _includeDOB = include;
+                return this;
+            }
+
+            public IGeneratorOptions IncludeAddress()
+            {
+                return IncludeAddress(true);
+            }
+
+            public IGeneratorOptions IncludeAddress(bool include)
+            {
+                _includeAddress = include;
+                return this;
+            }
+
+            public IGeneratorOptions IncludeGenderMale()
+            {
+                return IncludeGenderMale(true);
+            }
+
+            public IGeneratorOptions IncludeGenderMale(bool include)
+            {
+                _includeMale = include;
+                return this;
+            }
+
+            public IGeneratorOptions IncludeGenderFemale()
+            {
+                return IncludeGenderFemale(true);
+            }
+
+            public IGeneratorOptions IncludeGenderFemale(bool include)
+            {
+                _includeFemale = include;
+                return this;
+            }
+
+            public IGeneratorOptions IncludeGenderBoth()
+            {
+                _includeMale = true;
+                _includeFemale = true;
+                return this;
+            }
+
+            public IGeneratorOptions SetAgeRange(int minimum, int maximum)
+            {
+                _minimumAge = minimum;
+                _maximumAge = maximum;
+                return this;
+            }
+
+            public Generator CreateGenerator()
+            {
+                return new Generator
+                           {
+                               IncludeAddress = _includeAddress,
+                               IncludeDOB = _includeDOB,
+                               IncludeFemale = _includeFemale,
+                               IncludeMale = _includeMale,
+                               IncludeSSN = _includeSSN,
+                               MaximumAge = _maximumAge,
+                               MinimumAge = _minimumAge
+                           };
+            }
+        }
+
+        private Generator()
+        {
+            IncludeSSN = DEFAULT_INCLUDE_SSN;
+            IncludeDOB = DEFAULT_INCLUDE_DOB;
+            IncludeAddress = DEFAULT_INCLUDE_ADDRESS;
+            IncludeMale = DEFAULT_INCLUDE_MALE;
+            IncludeFemale = DEFAULT_INCLUDE_FEMALE;
+
+            MinimumAge = DEFAULT_MINIMUM_AGE;
+            MaximumAge = DEFAULT_MAXIMUM_AGE;
+        }
+
+        #region DEFAULTS
+        private const bool DEFAULT_INCLUDE_SSN = false;
+        private const bool DEFAULT_INCLUDE_DOB = false;
+        private const bool DEFAULT_INCLUDE_ADDRESS = false;
+        private const bool DEFAULT_INCLUDE_MALE = true;
+        private const bool DEFAULT_INCLUDE_FEMALE = true;
+
+        private const int DEFAULT_MINIMUM_AGE = 1;
+        private const int DEFAULT_MAXIMUM_AGE = 100;
+        #endregion
+
+        public bool IncludeSSN { get; private set; }
+        public bool IncludeDOB { get; private set; }
+        public bool IncludeAddress { get; private set; }
+        public bool IncludeMale { get; private set; }
+        public bool IncludeFemale { get; private set; }
+
+        public int MinimumAge { get; private set; }
+        public int MaximumAge { get; private set; }
+
+        public static Name GenerateName()
+        {
+            return GenerateName(true, true);
+        }
+
+        public static Name GenerateName(bool includeFemale, bool includeMale)
+        {
+            FirstName first;
+
+            if (includeFemale && includeMale)
+            {
+                first = FirstNames.GetRandom();
+            }
+            else if (includeFemale)
+            {
+                first = FirstNames.GetRandom(x => x.Gender == Gender.Female);
+            }
+            else
+            {
+                first = FirstNames.GetRandom(x => x.Gender == Gender.Male);
+            }
+
+            var middle = FirstNames.GetRandom(x => x.Gender == first.Gender);
+            var last = LastNames.GetRandom();
+
+            return new Name
+                       {
+                           First = first.Name,
+                           Middle = middle.Name,
+                           Last = last,
+                           Gender = first.Gender
+                       };
+        }
 
         public static string GenerateSSN()
         {
@@ -247,46 +388,26 @@ namespace EfficientlyLazy.IdentityGenerator
             return DateTime.Now.AddYears(age * -1).AddDays(ageDays).Date;
         }
 
-        public static Identity GenerateIdentity()
+        public Identity GenerateIdentity()
         {
-            return GenerateIdentity(IdentityElementFlagExtensions.All());
-        }
-
-        public static Identity GenerateIdentity(IdentityElementFlags elements)
-        {
-            var firstName = string.Empty;
-            var middleName = string.Empty;
-            var lastName = string.Empty;
-            var gender = string.Empty;
-
-            if (elements.HasFlag(IdentityElementFlags.Name))
-            {
-                var first = FirstNames.GetRandom();
-                var middle = FirstNames.GetRandom(x => x.Gender == first.Gender);
-
-                firstName = first.Name.ToProperCase();
-                middleName = middle.Name.ToProperCase();
-                lastName = LastNames.GetRandom().ToProperCase();
-                gender = first.Gender.ToString();
-            }
-
-            var ssn = elements.HasFlag(IdentityElementFlags.SSN) ? GenerateSSN() : string.Empty;
-            var dob = elements.HasFlag(IdentityElementFlags.DOB) ? GenerateDOB(18, 100) : DateTime.MinValue;
-            var address = elements.HasFlag(IdentityElementFlags.Address) ? GenerateAddress() : null;
+            var name = GenerateName(IncludeFemale, IncludeMale);
+            var ssn = IncludeSSN ? GenerateSSN() : string.Empty;
+            var dob = IncludeDOB ? (DateTime?)GenerateDOB(MinimumAge, MaximumAge) : null;
+            var address = IncludeAddress ? GenerateAddress() : null;
 
             return new Identity
                        {
-                           First = firstName,
-                           Middle = middleName,
-                           Last = lastName,
-                           Gender = gender,
+                           First = name.First,
+                           Middle = name.Middle,
+                           Last = name.Last,
+                           Gender = name.Gender,
                            SSN = ssn,
                            DOB = dob,
                            Address = address
                        };
         }
 
-        public static IEnumerable<Identity> GenerateIdentities(int number)
+        public IEnumerable<Identity> GenerateIdentities(int number)
         {
             for (var i = 0; i < number; i++)
             {
@@ -294,70 +415,32 @@ namespace EfficientlyLazy.IdentityGenerator
             }
         }
 
-        public static IEnumerable<Identity> GenerateIdentities(int number, IdentityElementFlags elements)
+        public void GenerateIdentities(int number, string delimiter, string filename)
         {
-            for (var i = 0; i < number; i++)
+            using (var sw = new StreamWriter(filename, true))
             {
-                yield return GenerateIdentity(elements);
-            }
-        }
-
-        public static void GenerateIdentities(int number, string delimiter, string filename, List<PropertyInfo> identityProperties)
-        {
-            using (var sw = new StreamWriter(filename, false))
-            {
-                foreach (var id in GenerateIdentities(number))
+                foreach (var identity in GenerateIdentities(number))
                 {
-                    var values = new List<string>();
+                    sw.Write(string.Format("{1}{0}{2}{0}{2}{0}{3}{0}{4}", delimiter, identity.First, identity.Middle, identity.Last, identity.Gender));
 
-                    foreach (var pi in identityProperties)
+                    if (IncludeSSN)
                     {
-                        var value = pi.GetValue(id, null);
-
-                        if (pi.PropertyType == typeof(DateTime))
-                        {
-                            values.Add(Convert.ToDateTime(value).ToString("MM/dd/yyyy"));
-                        }
-                        else
-                        {
-                            values.Add(value.ToString());
-                        }
+                        sw.Write(string.Format("{0}{1}", delimiter, identity.SSN));
                     }
 
-                    sw.WriteLine(string.Join(delimiter, values.ToArray()));
+                    if (IncludeDOB)
+                    {
+                        sw.Write(string.Format("{0}{1}", delimiter, identity.DOB));
+                    }
+
+                    if (IncludeAddress)
+                    {
+                        sw.Write(string.Format("{0}{1}{0}{2}{0}{3}{0}{4}{0}{5}", delimiter, identity.Address.AddressLine, identity.Address.City, identity.Address.StateName, identity.Address.StateAbbreviation, identity.Address.ZipCode));
+                    }
+
+                    sw.WriteLine();
                 }
             }
-        }
-
-        private static T GetRandom<T>(this IEnumerable<T> data, Func<T, bool> where)
-        {
-            var list = data.Where(where).ToList();
-
-            return list[Random.Next(0, list.Count)];
-        }
-
-        private static T GetRandom<T>(this IList<T> list)
-        {
-            return list[Random.Next(0, list.Count)];
-        }
-
-        private static string ToProperCase(this string value)
-        {
-            var proper = string.Empty;
-
-            for (var i = 0; i < value.Length; i++)
-            {
-                if (i == 0 || value[i - 1] == ' ')
-                {
-                    proper += value[i].ToString().ToUpper();
-                }
-                else
-                {
-                    proper += value[i].ToString().ToLower();
-                }
-            }
-
-            return proper;
         }
     }
 }

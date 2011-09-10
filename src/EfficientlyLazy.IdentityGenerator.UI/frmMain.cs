@@ -1,10 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Linq;
-using System.Reflection;
 using System.Windows.Forms;
-using EfficientlyLazy.IdentityGenerator.Entity;
 
 namespace EfficientlyLazy.IdentityGenerator.UI
 {
@@ -17,7 +13,15 @@ namespace EfficientlyLazy.IdentityGenerator.UI
             public string Filename { get; set; }
             public string Delimiter { get; set; }
             public int Number { get; set; }
-            public List<PropertyInfo> PropertyInfos { get; set; } 
+
+            public bool IncludeSSN { get; set; }
+            public bool IncludeDOB { get; set; }
+            public bool IncludeAddress { get; set; }
+            public bool IncludeMale { get; set; }
+            public bool IncludeFemale { get; set; }
+
+            public int MinimumAge { get; set; }
+            public int MaximumAge { get; set; }
         }
 
         public frmMain()
@@ -27,14 +31,6 @@ namespace EfficientlyLazy.IdentityGenerator.UI
             _worker = new BackgroundWorker();
             _worker.DoWork += WorkerDoWork;
             _worker.RunWorkerCompleted += WorkerRunWorkerCompleted;
-
-            lbExcluded.DisplayMember = "Name";
-            lbIncluded.DisplayMember = "Name";
-
-            foreach (var pi in typeof(Identity).GetProperties())
-            {
-                lbExcluded.Items.Add(pi);
-            }
         }
 
         private void WorkerRunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
@@ -55,100 +51,21 @@ namespace EfficientlyLazy.IdentityGenerator.UI
         {
             var gp = (GenParams) e.Argument;
 
-            Generator.GenerateIdentities(gp.Number, gp.Delimiter, gp.Filename, gp.PropertyInfos);
+            var generator = Generator.SetOptions()
+                .IncludeAddress(gp.IncludeAddress)
+                .IncludeDOB(gp.IncludeDOB)
+                .IncludeGenderMale(gp.IncludeMale)
+                .IncludeGenderFemale(gp.IncludeFemale)
+                .IncludeSSN(gp.IncludeSSN)
+                .SetAgeRange(gp.MinimumAge, gp.MaximumAge)
+                .CreateGenerator();
+
+            generator.GenerateIdentities(gp.Number, gp.Delimiter, gp.Filename);
         }
 
         private void frmMain_Load(object sender, EventArgs e)
         {
 
-        }
-
-        private void lbIncluded_DoubleClick(object sender, EventArgs e)
-        {
-            cmdExclude.PerformClick();
-        }
-
-        private void cmdIncludeAll_Click(object sender, EventArgs e)
-        {
-            var items = lbExcluded.Items.Cast<PropertyInfo>().ToList();
-
-            foreach (var pi in items)
-            {
-                lbIncluded.Items.Add(pi);
-                lbExcluded.Items.Remove(pi);
-            }
-        }
-
-        private void cmdInclude_Click(object sender, EventArgs e)
-        {
-            var items = lbExcluded.SelectedItems.Cast<PropertyInfo>().ToList();
-
-            foreach (var pi in items)
-            {
-                lbIncluded.Items.Add(pi);
-                lbExcluded.Items.Remove(pi);
-            }
-        }
-
-        private void lbExcluded_DoubleClick(object sender, EventArgs e)
-        {
-            cmdInclude.PerformClick();
-        }
-
-        private void cmdExcludeAll_Click(object sender, EventArgs e)
-        {
-            var items = lbIncluded.Items.Cast<PropertyInfo>().ToList();
-
-            foreach (var pi in items)
-            {
-                lbExcluded.Items.Add(pi);
-                lbIncluded.Items.Remove(pi);
-            }
-        }
-
-        private void cmdExclude_Click(object sender, EventArgs e)
-        {
-            var items = lbIncluded.SelectedItems.Cast<PropertyInfo>().ToList();
-
-            foreach (var pi in items)
-            {
-                lbExcluded.Items.Add(pi);
-                lbIncluded.Items.Remove(pi);
-            }
-        }
-
-        private void cmdUp_Click(object sender, EventArgs e)
-        {
-            if (lbIncluded.SelectedItems.Count != 1 || lbIncluded.SelectedIndex == 0)
-            {
-                return;
-            }
-
-            var idx = lbIncluded.SelectedIndex;
-            var item = (PropertyInfo)lbIncluded.SelectedItem;
-
-            lbIncluded.Items.Remove(item);
-
-            lbIncluded.Items.Insert(idx - 1, item);
-
-            lbIncluded.SelectedItem = item;
-        }
-
-        private void cmdDown_Click(object sender, EventArgs e)
-        {
-            if (lbIncluded.SelectedItems.Count != 1 || lbIncluded.SelectedIndex == lbIncluded.Items.Count - 1)
-            {
-                return;
-            }
-
-            var idx = lbIncluded.SelectedIndex;
-            var item = (PropertyInfo)lbIncluded.SelectedItem;
-
-            lbIncluded.Items.Remove(item);
-
-            lbIncluded.Items.Insert(idx + 1, item);
-
-            lbIncluded.SelectedItem = item;
         }
 
         private void cmdClose_Click(object sender, EventArgs e)
@@ -158,12 +75,6 @@ namespace EfficientlyLazy.IdentityGenerator.UI
 
         private void cmdGenerate_Click(object sender, EventArgs e)
         {
-            if (lbIncluded.Items.Count == 0)
-            {
-                MessageBox.Show("Error", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
-            }
-
             string filename;
 
             using (var sfd = new SaveFileDialog())
@@ -191,9 +102,20 @@ namespace EfficientlyLazy.IdentityGenerator.UI
                                        {
                                            Delimiter = txtDelimiter.Text,
                                            Filename = filename,
-                                           Number = (int)nudRecords.Value,
-                                           PropertyInfos = lbIncluded.Items.Cast<PropertyInfo>().ToList()
+                                           Number = (int) nudRecords.Value,
+                                           IncludeAddress = cbxIncludeAddress.Checked,
+                                           IncludeDOB = cbxIncludeDOB.Checked,
+                                           IncludeFemale = rbGenderBoth.Checked || rbGenderFemale.Checked,
+                                           IncludeMale = rbGenderBoth.Checked || rbGenderMale.Checked,
+                                           IncludeSSN = cbxIncludeSSN.Checked,
+                                           MaximumAge = (int) nudMaxAge.Value,
+                                           MinimumAge = (int) nudMinAge.Value
                                        });
+        }
+
+        private void cbxIncludeDOB_CheckedChanged(object sender, EventArgs e)
+        {
+            gbAgeRange.Enabled = cbxIncludeDOB.Checked;
         }
     }
 }

@@ -5,6 +5,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EfficientlyLazy.IdentityGen
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EfficientlyLazy.IdentityGenerator.UI", "EfficientlyLazy.IdentityGenerator.UI\EfficientlyLazy.IdentityGenerator.UI.csproj", "{2985B6DF-64E4-469A-99CB-F1F98F7ADABF}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Shared", "Shared", "{E1B9882E-7334-422A-9E6C-0C6B73571A4B}"
+	ProjectSection(SolutionItems) = preProject
+		SharedAssemblyInfo.cs = SharedAssemblyInfo.cs
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

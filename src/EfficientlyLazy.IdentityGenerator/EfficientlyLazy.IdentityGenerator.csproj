@@ -39,9 +39,16 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\SharedAssemblyInfo.cs">
+      <Link>SharedAssemblyInfo.cs</Link>
+    </Compile>
     <Compile Include="Entity\Address.cs" />
+    <Compile Include="Entity\Gender.cs" />
     <Compile Include="Entity\Identity.cs" />
+    <Compile Include="Entity\Name.cs" />
+    <Compile Include="ExtensionMethods.cs" />
     <Compile Include="Generator.cs" />
+    <Compile Include="IGeneratorOptions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
