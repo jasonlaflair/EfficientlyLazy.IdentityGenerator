@@ -50,9 +50,9 @@
     <Content Include="DataFiles\NamesLast.txt" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="DataFiles\CityStateZips.data" />
-    <None Include="DataFiles\NamesFirst.data" />
-    <None Include="DataFiles\NamesLast.data" />
+    <EmbeddedResource Include="DataFiles\CityStateZips.data" />
+    <EmbeddedResource Include="DataFiles\NamesFirst.data" />
+    <EmbeddedResource Include="DataFiles\NamesLast.data" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
