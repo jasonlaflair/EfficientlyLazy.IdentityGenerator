@@ -8,7 +8,7 @@ using EfficientlyLazy.IdentityGenerator.Entity;
 
 namespace EfficientlyLazy.IdentityGenerator
 {
-    public class Generator
+    public class Generator : IGenerator
     {
         #region Pre-Processing
         
@@ -16,6 +16,20 @@ namespace EfficientlyLazy.IdentityGenerator
         {
             public string Name { get; set; }
             public Gender Gender { get; set; }
+        }
+
+        private class SSNAreaCode
+        {
+            public int Minimum { get; set; }
+            public int Maximum { get; set; }
+            public string StateAbbreviation { get; set; }
+
+            public SSNAreaCode(int min, int max, string stateAbbreviation)
+            {
+                Minimum = min;
+                Maximum = max;
+                StateAbbreviation = stateAbbreviation;
+            }
         }
 
         private class CityStateZip
@@ -29,6 +43,80 @@ namespace EfficientlyLazy.IdentityGenerator
         private static readonly List<FirstName> FirstNames = new List<FirstName>();
         private static readonly List<string> LastNames = new List<string>();
         private static readonly List<CityStateZip> CityStateZips = new List<CityStateZip>();
+
+        private static readonly List<SSNAreaCode> SSNAreaCodes = new List<SSNAreaCode>
+                                                                     {
+                                                                         new SSNAreaCode(416, 424, "AL"),
+                                                                         new SSNAreaCode(574, 574, "AK"),
+                                                                         new SSNAreaCode(526, 527, "AZ"),
+                                                                         new SSNAreaCode(600, 601, "AZ"),
+                                                                         new SSNAreaCode(764, 765, "AZ"),
+                                                                         new SSNAreaCode(429, 432, "AR"),
+                                                                         new SSNAreaCode(676, 679, "AR"),
+                                                                         new SSNAreaCode(545, 573, "CA"),
+                                                                         new SSNAreaCode(602, 626, "CA"),
+                                                                         new SSNAreaCode(521, 524, "CO"),
+                                                                         new SSNAreaCode(650, 653, "CO"),
+                                                                         new SSNAreaCode(40, 49, "CT"),
+                                                                         new SSNAreaCode(221, 222, "DE"),
+                                                                         new SSNAreaCode(261, 267, "FL"),
+                                                                         new SSNAreaCode(589, 595, "FL"),
+                                                                         new SSNAreaCode(766, 772, "FL"),
+                                                                         new SSNAreaCode(252, 260, "GA"),
+                                                                         new SSNAreaCode(667, 675, "GA"),
+                                                                         new SSNAreaCode(575, 576, "HI"),
+                                                                         new SSNAreaCode(750, 751, "HI"),
+                                                                         new SSNAreaCode(518, 519, "ID"),
+                                                                         new SSNAreaCode(318, 361, "IL"),
+                                                                         new SSNAreaCode(303, 317, "IN"),
+                                                                         new SSNAreaCode(478, 485, "IA"),
+                                                                         new SSNAreaCode(509, 515, "KS"),
+                                                                         new SSNAreaCode(400, 407, "KY"),
+                                                                         new SSNAreaCode(433, 439, "LA"),
+                                                                         new SSNAreaCode(659, 665, "LA"),
+                                                                         new SSNAreaCode(4, 7, "ME"),
+                                                                         new SSNAreaCode(212, 220, "MD"),
+                                                                         new SSNAreaCode(10, 34, "MA"),
+                                                                         new SSNAreaCode(362, 386, "MI"),
+                                                                         new SSNAreaCode(468, 477, "MN"),
+                                                                         new SSNAreaCode(425, 428, "MS"),
+                                                                         new SSNAreaCode(587, 588, "MS"),
+                                                                         new SSNAreaCode(752, 755, "MS"),
+                                                                         new SSNAreaCode(486, 500, "MO"),
+                                                                         new SSNAreaCode(516, 517, "MT"),
+                                                                         new SSNAreaCode(505, 508, "NE"),
+                                                                         new SSNAreaCode(530, 680, "NV"),
+                                                                         new SSNAreaCode(1, 3, "NH"),
+                                                                         new SSNAreaCode(135, 158, "NJ"),
+                                                                         new SSNAreaCode(525, 585, "NM"),
+                                                                         new SSNAreaCode(648, 649, "NM"),
+                                                                         new SSNAreaCode(50, 134, "NY"),
+                                                                         new SSNAreaCode(232, 232, "NC"),
+                                                                         new SSNAreaCode(237, 246, "NC"),
+                                                                         new SSNAreaCode(681, 690, "NC"),
+                                                                         new SSNAreaCode(501, 502, "ND"),
+                                                                         new SSNAreaCode(268, 302, "OH"),
+                                                                         new SSNAreaCode(440, 448, "OK"),
+                                                                         new SSNAreaCode(540, 544, "OR"),
+                                                                         new SSNAreaCode(159, 211, "PA"),
+                                                                         new SSNAreaCode(35, 39, "RI"),
+                                                                         new SSNAreaCode(247, 251, "SC"),
+                                                                         new SSNAreaCode(654, 658, "SC"),
+                                                                         new SSNAreaCode(503, 504, "SD"),
+                                                                         new SSNAreaCode(408, 415, "TN"),
+                                                                         new SSNAreaCode(756, 763, "TN"),
+                                                                         new SSNAreaCode(449, 467, "TX"),
+                                                                         new SSNAreaCode(627, 645, "TX"),
+                                                                         new SSNAreaCode(528, 529, "UT"),
+                                                                         new SSNAreaCode(646, 647, "UT"),
+                                                                         new SSNAreaCode(8, 9, "VT"),
+                                                                         new SSNAreaCode(223, 231, "VA"),
+                                                                         new SSNAreaCode(691, 699, "VA"),
+                                                                         new SSNAreaCode(531, 539, "WA"),
+                                                                         new SSNAreaCode(232, 236, "WV"),
+                                                                         new SSNAreaCode(387, 399, "WI"),
+                                                                         new SSNAreaCode(520, 520, "WY"),
+                                                                     };
 
         private static readonly List<string> StreetTypes = new List<string>
                                                                {
@@ -250,7 +338,7 @@ namespace EfficientlyLazy.IdentityGenerator
                 return this;
             }
 
-            public Generator CreateGenerator()
+            public IGenerator CreateGenerator()
             {
                 return new Generator
                            {
@@ -331,16 +419,31 @@ namespace EfficientlyLazy.IdentityGenerator
                        };
         }
 
-        public static string GenerateSSN()
+        public static string GenerateSSN(string stateAbbreviation)
         {
             var ssn = string.Empty;
-            for (var i = 0; i < 9; i++)
+            
+            var areaCode = SSNAreaCodes.FirstOrDefault(x => x.StateAbbreviation == stateAbbreviation);
+
+            if (areaCode != null)
+            {
+                var digits = Random.Next(areaCode.Minimum, areaCode.Maximum + 1);
+                ssn = digits.ToString().PadLeft(3, '0');
+            }
+
+            do
             {
                 var digit = Random.Next(0, 10);
                 ssn += digit.ToString();
             }
+            while (ssn.Length < 9);
 
             return ssn;
+        }
+
+        public static string GenerateSSN()
+        {
+            return GenerateSSN(string.Empty);
         }
 
         public static Address GenerateAddress()

@@ -15,6 +15,6 @@
         IGeneratorOptions IncludeGenderBoth();
         IGeneratorOptions SetAgeRange(int minimum, int maximum);
 
-        Generator CreateGenerator();
+        IGenerator CreateGenerator();
     }
 }
