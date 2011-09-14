@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+  <metadata>
+    <id>EfficientlyLazy.IdentityGenerator</id>
+    <version>0.9.4</version>
+    <title>EfficientlyLazy.IdentityGenerator</title>
+    <authors>Jason LaFlair</authors>
+    <owners>Jason LaFlair</owners>
+    <licenseUrl>http://opensource.org/licenses/Apache-2.0</licenseUrl>
+    <projectUrl>https://github.com/jasonlaflair/EfficientlyLazy.IdentityGenerator</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>.Net library create random identities that include Name, Address, City, State, Zip, SSN and Date of Birth.</description>
+    <summary />
+    <language>es-US</language>
+    <tags>identity generator random name address city state zip ssn dob</tags>
+  </metadata>
+  <files>
+    <file src="..\src\EfficientlyLazy.IdentityGenerator\bin\Release\EfficientlyLazy.IdentityGenerator.dll" target="lib\net35\EfficientlyLazy.IdentityGenerator.dll" />
+    <file src="..\src\EfficientlyLazy.IdentityGenerator\bin\Release\EfficientlyLazy.IdentityGenerator.XML" target="lib\net35\EfficientlyLazy.IdentityGenerator.XML" />
+    <file src="..\src\EfficientlyLazy.IdentityGenerator\bin\Release\EfficientlyLazy.IdentityGenerator.dll" target="lib\net40\EfficientlyLazy.IdentityGenerator.dll" />
+    <file src="..\src\EfficientlyLazy.IdentityGenerator\bin\Release\EfficientlyLazy.IdentityGenerator.XML" target="lib\net40\EfficientlyLazy.IdentityGenerator.XML" />
+  </files>
+</package>
