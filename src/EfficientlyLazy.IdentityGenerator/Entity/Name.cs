@@ -1,10 +1,10 @@
 ﻿namespace EfficientlyLazy.IdentityGenerator.Entity
 {
-    public class Name
+    internal class Name : IName
     {
-        public string First { get; internal set; }
-        public string Middle { get; internal set; }
-        public string Last { get; internal set; }
-        public Gender Gender { get; internal set; }
+        public string First { get; set; }
+        public string Middle { get; set; }
+        public string Last { get; set; }
+        public Gender Gender { get; set; }
     }
 }

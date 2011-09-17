@@ -48,8 +48,14 @@
     </Compile>
     <Compile Include="Entity\Address.cs" />
     <Compile Include="Entity\Gender.cs" />
+    <Compile Include="Entity\GenderFilter.cs" />
+    <Compile Include="Entity\IAddress.cs" />
     <Compile Include="Entity\Identity.cs" />
+    <Compile Include="Entity\IIdentity.cs" />
+    <Compile Include="Entity\IName.cs" />
+    <Compile Include="Entity\IState.cs" />
     <Compile Include="Entity\Name.cs" />
+    <Compile Include="Entity\State.cs" />
     <Compile Include="ExtensionMethods.cs" />
     <Compile Include="Generator.cs" />
     <Compile Include="IGenerator.cs" />

@@ -1,11 +1,10 @@
 namespace EfficientlyLazy.IdentityGenerator.Entity
 {
-    public class Address
+    internal class Address : IAddress
     {
-        public string AddressLine { get; internal set; }
-        public string City { get; internal set; }
-        public string StateAbbreviation { get; internal set; }
-        public string StateName { get; internal set; }
-        public string ZipCode { get; internal set; }
+        public string AddressLine { get; set; }
+        public string City { get; set; }
+        public IState State { get; set; }
+        public string ZipCode { get; set; }
     }
 }

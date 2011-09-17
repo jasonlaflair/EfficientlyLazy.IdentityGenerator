@@ -1,6 +1,7 @@
 ﻿using System;
 using System.ComponentModel;
 using System.Windows.Forms;
+using EfficientlyLazy.IdentityGenerator.Entity;
 
 namespace EfficientlyLazy.IdentityGenerator.UI
 {
@@ -17,8 +18,7 @@ namespace EfficientlyLazy.IdentityGenerator.UI
             public bool IncludeSSN { get; set; }
             public bool IncludeDOB { get; set; }
             public bool IncludeAddress { get; set; }
-            public bool IncludeMale { get; set; }
-            public bool IncludeFemale { get; set; }
+            public GenderFilter Genders { get; set; }
 
             public int MinimumAge { get; set; }
             public int MaximumAge { get; set; }
@@ -49,13 +49,12 @@ namespace EfficientlyLazy.IdentityGenerator.UI
 
         private void WorkerDoWork(object sender, DoWorkEventArgs e)
         {
-            var gp = (GenParams) e.Argument;
+            var gp = (GenParams)e.Argument;
 
             var generator = Generator.SetOptions()
                 .IncludeAddress(gp.IncludeAddress)
                 .IncludeDOB(gp.IncludeDOB)
-                .IncludeGenderMale(gp.IncludeMale)
-                .IncludeGenderFemale(gp.IncludeFemale)
+                .SetGenderFilter(gp.Genders)
                 .IncludeSSN(gp.IncludeSSN)
                 .SetAgeRange(gp.MinimumAge, gp.MaximumAge)
                 .CreateGenerator();
@@ -98,18 +97,32 @@ namespace EfficientlyLazy.IdentityGenerator.UI
             Refresh();
             Application.DoEvents();
 
+            GenderFilter gf;
+
+            if (rbGenderMale.Checked)
+            {
+                gf = GenderFilter.Male;
+            }
+            else if (rbGenderFemale.Checked)
+            {
+                gf = GenderFilter.Female;
+            }
+            else
+            {
+                gf = GenderFilter.Both;
+            }
+
             _worker.RunWorkerAsync(new GenParams
                                        {
                                            Delimiter = txtDelimiter.Text,
                                            Filename = filename,
-                                           Number = (int) nudRecords.Value,
+                                           Number = (int)nudRecords.Value,
                                            IncludeAddress = cbxIncludeAddress.Checked,
                                            IncludeDOB = cbxIncludeDOB.Checked,
-                                           IncludeFemale = rbGenderBoth.Checked || rbGenderFemale.Checked,
-                                           IncludeMale = rbGenderBoth.Checked || rbGenderMale.Checked,
+                                           Genders = gf,
                                            IncludeSSN = cbxIncludeSSN.Checked,
-                                           MaximumAge = (int) nudMaxAge.Value,
-                                           MinimumAge = (int) nudMinAge.Value
+                                           MaximumAge = (int)nudMaxAge.Value,
+                                           MinimumAge = (int)nudMinAge.Value
                                        });
         }
 

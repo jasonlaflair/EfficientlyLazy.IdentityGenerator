@@ -263,8 +263,7 @@ namespace EfficientlyLazy.IdentityGenerator
             private bool _includeSSN = DEFAULT_INCLUDE_SSN;
             private bool _includeDOB = DEFAULT_INCLUDE_DOB;
             private bool _includeAddress = DEFAULT_INCLUDE_ADDRESS;
-            private bool _includeMale = DEFAULT_INCLUDE_MALE;
-            private bool _includeFemale = DEFAULT_INCLUDE_FEMALE;
+            private GenderFilter _genderFilter = DEFAULT_GENDER_FILTER;
 
             private int _minimumAge = DEFAULT_MINIMUM_AGE;
             private int _maximumAge = DEFAULT_MAXIMUM_AGE;
@@ -302,32 +301,9 @@ namespace EfficientlyLazy.IdentityGenerator
                 return this;
             }
 
-            public IGeneratorOptions IncludeGenderMale()
+            public IGeneratorOptions SetGenderFilter(GenderFilter filter)
             {
-                return IncludeGenderMale(true);
-            }
-
-            public IGeneratorOptions IncludeGenderMale(bool include)
-            {
-                _includeMale = include;
-                return this;
-            }
-
-            public IGeneratorOptions IncludeGenderFemale()
-            {
-                return IncludeGenderFemale(true);
-            }
-
-            public IGeneratorOptions IncludeGenderFemale(bool include)
-            {
-                _includeFemale = include;
-                return this;
-            }
-
-            public IGeneratorOptions IncludeGenderBoth()
-            {
-                _includeMale = true;
-                _includeFemale = true;
+                _genderFilter = filter;
                 return this;
             }
 
@@ -344,8 +320,7 @@ namespace EfficientlyLazy.IdentityGenerator
                            {
                                IncludeAddress = _includeAddress,
                                IncludeDOB = _includeDOB,
-                               IncludeFemale = _includeFemale,
-                               IncludeMale = _includeMale,
+                               Genders = _genderFilter,
                                IncludeSSN = _includeSSN,
                                MaximumAge = _maximumAge,
                                MinimumAge = _minimumAge
@@ -358,8 +333,7 @@ namespace EfficientlyLazy.IdentityGenerator
             IncludeSSN = DEFAULT_INCLUDE_SSN;
             IncludeDOB = DEFAULT_INCLUDE_DOB;
             IncludeAddress = DEFAULT_INCLUDE_ADDRESS;
-            IncludeMale = DEFAULT_INCLUDE_MALE;
-            IncludeFemale = DEFAULT_INCLUDE_FEMALE;
+            Genders = DEFAULT_GENDER_FILTER;
 
             MinimumAge = DEFAULT_MINIMUM_AGE;
             MaximumAge = DEFAULT_MAXIMUM_AGE;
@@ -369,8 +343,7 @@ namespace EfficientlyLazy.IdentityGenerator
         private const bool DEFAULT_INCLUDE_SSN = false;
         private const bool DEFAULT_INCLUDE_DOB = false;
         private const bool DEFAULT_INCLUDE_ADDRESS = false;
-        private const bool DEFAULT_INCLUDE_MALE = true;
-        private const bool DEFAULT_INCLUDE_FEMALE = true;
+        private const GenderFilter DEFAULT_GENDER_FILTER = GenderFilter.Both;
 
         private const int DEFAULT_MINIMUM_AGE = 1;
         private const int DEFAULT_MAXIMUM_AGE = 100;
@@ -379,32 +352,33 @@ namespace EfficientlyLazy.IdentityGenerator
         public bool IncludeSSN { get; private set; }
         public bool IncludeDOB { get; private set; }
         public bool IncludeAddress { get; private set; }
-        public bool IncludeMale { get; private set; }
-        public bool IncludeFemale { get; private set; }
+        public GenderFilter Genders { get; private set; }
 
         public int MinimumAge { get; private set; }
         public int MaximumAge { get; private set; }
 
-        public static Name GenerateName()
+        public static IName GenerateName()
         {
-            return GenerateName(true, true);
+            return GenerateName(GenderFilter.Both);
         }
 
-        public static Name GenerateName(bool includeFemale, bool includeMale)
+        public static IName GenerateName(GenderFilter filter)
         {
             FirstName first;
 
-            if (includeFemale && includeMale)
+            switch (filter)
             {
-                first = FirstNames.GetRandom();
-            }
-            else if (includeFemale)
-            {
-                first = FirstNames.GetRandom(x => x.Gender == Gender.Female);
-            }
-            else
-            {
-                first = FirstNames.GetRandom(x => x.Gender == Gender.Male);
+                case GenderFilter.Female:
+                    first = FirstNames.GetRandom(x => x.Gender == Gender.Female);
+                    break;
+                case GenderFilter.Male:
+                    first = FirstNames.GetRandom(x => x.Gender == Gender.Male);
+                    break;
+                case GenderFilter.Both:
+                    first = FirstNames.GetRandom();
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException("filter");
             }
 
             var middle = FirstNames.GetRandom(x => x.Gender == first.Gender);
@@ -417,6 +391,11 @@ namespace EfficientlyLazy.IdentityGenerator
                            Last = last,
                            Gender = first.Gender
                        };
+        }
+
+        public static string GenerateSSN()
+        {
+            return GenerateSSN(string.Empty);
         }
 
         public static string GenerateSSN(string stateAbbreviation)
@@ -441,20 +420,18 @@ namespace EfficientlyLazy.IdentityGenerator
             return ssn;
         }
 
-        public static string GenerateSSN()
-        {
-            return GenerateSSN(string.Empty);
-        }
-
-        public static Address GenerateAddress()
+        public static IAddress GenerateAddress()
         {
             var cityStateZip = CityStateZips.GetRandom();
 
             var address = new Address
                               {
                                   City = cityStateZip.City,
-                                  StateAbbreviation = cityStateZip.StateAbbreviation,
-                                  StateName = cityStateZip.StateName,
+                                  State = new State
+                                              {
+                                                  Abbreviation = cityStateZip.StateAbbreviation,
+                                                  Name = cityStateZip.StateName
+                                              },
                                   ZipCode = cityStateZip.ZipCode
                               };
 
@@ -491,26 +468,23 @@ namespace EfficientlyLazy.IdentityGenerator
             return DateTime.Now.AddYears(age * -1).AddDays(ageDays).Date;
         }
 
-        public Identity GenerateIdentity()
+        public IIdentity GenerateIdentity()
         {
-            var name = GenerateName(IncludeFemale, IncludeMale);
+            var name = GenerateName(Genders);
             var ssn = IncludeSSN ? GenerateSSN() : string.Empty;
             var dob = IncludeDOB ? (DateTime?)GenerateDOB(MinimumAge, MaximumAge) : null;
             var address = IncludeAddress ? GenerateAddress() : null;
 
             return new Identity
                        {
-                           First = name.First,
-                           Middle = name.Middle,
-                           Last = name.Last,
-                           Gender = name.Gender,
+                           Name = name,
                            SSN = ssn,
                            DOB = dob,
                            Address = address
                        };
         }
 
-        public IEnumerable<Identity> GenerateIdentities(int number)
+        public IEnumerable<IIdentity> GenerateIdentities(int number)
         {
             for (var i = 0; i < number; i++)
             {
@@ -524,7 +498,7 @@ namespace EfficientlyLazy.IdentityGenerator
             {
                 foreach (var identity in GenerateIdentities(number))
                 {
-                    sw.Write(string.Format("{1}{0}{2}{0}{2}{0}{3}{0}{4}", delimiter, identity.First, identity.Middle, identity.Last, identity.Gender));
+                    sw.Write(string.Format("{1}{0}{2}{0}{2}{0}{3}{0}{4}", delimiter, identity.Name.First, identity.Name.Middle, identity.Name.Last, identity.Name.Gender));
 
                     if (IncludeSSN)
                     {
@@ -538,7 +512,7 @@ namespace EfficientlyLazy.IdentityGenerator
 
                     if (IncludeAddress)
                     {
-                        sw.Write(string.Format("{0}{1}{0}{2}{0}{3}{0}{4}{0}{5}", delimiter, identity.Address.AddressLine, identity.Address.City, identity.Address.StateName, identity.Address.StateAbbreviation, identity.Address.ZipCode));
+                        sw.Write(string.Format("{0}{1}{0}{2}{0}{3}{0}{4}{0}{5}", delimiter, identity.Address.AddressLine, identity.Address.City, identity.Address.State.Name, identity.Address.State.Abbreviation, identity.Address.ZipCode));
                     }
 
                     sw.WriteLine();

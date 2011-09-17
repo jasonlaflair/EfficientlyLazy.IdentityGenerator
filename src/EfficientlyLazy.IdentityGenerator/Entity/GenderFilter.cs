@@ -1,8 +1,9 @@
 ﻿namespace EfficientlyLazy.IdentityGenerator.Entity
 {
-    public enum Gender
+    public enum GenderFilter
     {
         Female,
-        Male
+        Male,
+        Both
     }
 }
