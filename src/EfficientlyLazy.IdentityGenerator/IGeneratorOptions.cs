@@ -5,14 +5,13 @@ namespace EfficientlyLazy.IdentityGenerator
     public interface IGeneratorOptions
     {
         IGeneratorOptions IncludeSSN();
-        IGeneratorOptions IncludeSSN(bool include);
-        IGeneratorOptions IncludeDOB();
-        IGeneratorOptions IncludeDOB(bool include);
+        IGeneratorOptions ExcludeSSN();
+        IGeneratorOptions IncludeDOB(int minimum, int maximum);
+        IGeneratorOptions ExcludeDOB();
         IGeneratorOptions IncludeAddress();
-        IGeneratorOptions IncludeAddress(bool include);
+        IGeneratorOptions ExcludeAddress();
         IGeneratorOptions SetGenderFilter(GenderFilter filter);
-        IGeneratorOptions SetAgeRange(int minimum, int maximum);
 
-        IGenerator CreateGenerator();
+        IGenerator Build();
     }
 }

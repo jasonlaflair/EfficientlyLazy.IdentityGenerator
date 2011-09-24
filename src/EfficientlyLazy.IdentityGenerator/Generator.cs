@@ -12,111 +12,10 @@ namespace EfficientlyLazy.IdentityGenerator
     {
         #region Pre-Processing
         
-        private class FirstName
-        {
-            public string Name { get; set; }
-            public Gender Gender { get; set; }
-        }
-
-        private class SSNAreaCode
-        {
-            public int Minimum { get; set; }
-            public int Maximum { get; set; }
-            public string StateAbbreviation { get; set; }
-
-            public SSNAreaCode(int min, int max, string stateAbbreviation)
-            {
-                Minimum = min;
-                Maximum = max;
-                StateAbbreviation = stateAbbreviation;
-            }
-        }
-
-        private class CityStateZip
-        {
-            public string City { get; set; }
-            public string StateName { get; set; }
-            public string StateAbbreviation { get; set; }
-            public string ZipCode { get; set; }
-        }
-
-        private static readonly List<FirstName> FirstNames = new List<FirstName>();
+        private static readonly List<IFirstNameData> FirstNames = new List<IFirstNameData>();
         private static readonly List<string> LastNames = new List<string>();
-        private static readonly List<CityStateZip> CityStateZips = new List<CityStateZip>();
-
-        private static readonly List<SSNAreaCode> SSNAreaCodes = new List<SSNAreaCode>
-                                                                     {
-                                                                         new SSNAreaCode(416, 424, "AL"),
-                                                                         new SSNAreaCode(574, 574, "AK"),
-                                                                         new SSNAreaCode(526, 527, "AZ"),
-                                                                         new SSNAreaCode(600, 601, "AZ"),
-                                                                         new SSNAreaCode(764, 765, "AZ"),
-                                                                         new SSNAreaCode(429, 432, "AR"),
-                                                                         new SSNAreaCode(676, 679, "AR"),
-                                                                         new SSNAreaCode(545, 573, "CA"),
-                                                                         new SSNAreaCode(602, 626, "CA"),
-                                                                         new SSNAreaCode(521, 524, "CO"),
-                                                                         new SSNAreaCode(650, 653, "CO"),
-                                                                         new SSNAreaCode(40, 49, "CT"),
-                                                                         new SSNAreaCode(221, 222, "DE"),
-                                                                         new SSNAreaCode(261, 267, "FL"),
-                                                                         new SSNAreaCode(589, 595, "FL"),
-                                                                         new SSNAreaCode(766, 772, "FL"),
-                                                                         new SSNAreaCode(252, 260, "GA"),
-                                                                         new SSNAreaCode(667, 675, "GA"),
-                                                                         new SSNAreaCode(575, 576, "HI"),
-                                                                         new SSNAreaCode(750, 751, "HI"),
-                                                                         new SSNAreaCode(518, 519, "ID"),
-                                                                         new SSNAreaCode(318, 361, "IL"),
-                                                                         new SSNAreaCode(303, 317, "IN"),
-                                                                         new SSNAreaCode(478, 485, "IA"),
-                                                                         new SSNAreaCode(509, 515, "KS"),
-                                                                         new SSNAreaCode(400, 407, "KY"),
-                                                                         new SSNAreaCode(433, 439, "LA"),
-                                                                         new SSNAreaCode(659, 665, "LA"),
-                                                                         new SSNAreaCode(4, 7, "ME"),
-                                                                         new SSNAreaCode(212, 220, "MD"),
-                                                                         new SSNAreaCode(10, 34, "MA"),
-                                                                         new SSNAreaCode(362, 386, "MI"),
-                                                                         new SSNAreaCode(468, 477, "MN"),
-                                                                         new SSNAreaCode(425, 428, "MS"),
-                                                                         new SSNAreaCode(587, 588, "MS"),
-                                                                         new SSNAreaCode(752, 755, "MS"),
-                                                                         new SSNAreaCode(486, 500, "MO"),
-                                                                         new SSNAreaCode(516, 517, "MT"),
-                                                                         new SSNAreaCode(505, 508, "NE"),
-                                                                         new SSNAreaCode(530, 680, "NV"),
-                                                                         new SSNAreaCode(1, 3, "NH"),
-                                                                         new SSNAreaCode(135, 158, "NJ"),
-                                                                         new SSNAreaCode(525, 585, "NM"),
-                                                                         new SSNAreaCode(648, 649, "NM"),
-                                                                         new SSNAreaCode(50, 134, "NY"),
-                                                                         new SSNAreaCode(232, 232, "NC"),
-                                                                         new SSNAreaCode(237, 246, "NC"),
-                                                                         new SSNAreaCode(681, 690, "NC"),
-                                                                         new SSNAreaCode(501, 502, "ND"),
-                                                                         new SSNAreaCode(268, 302, "OH"),
-                                                                         new SSNAreaCode(440, 448, "OK"),
-                                                                         new SSNAreaCode(540, 544, "OR"),
-                                                                         new SSNAreaCode(159, 211, "PA"),
-                                                                         new SSNAreaCode(35, 39, "RI"),
-                                                                         new SSNAreaCode(247, 251, "SC"),
-                                                                         new SSNAreaCode(654, 658, "SC"),
-                                                                         new SSNAreaCode(503, 504, "SD"),
-                                                                         new SSNAreaCode(408, 415, "TN"),
-                                                                         new SSNAreaCode(756, 763, "TN"),
-                                                                         new SSNAreaCode(449, 467, "TX"),
-                                                                         new SSNAreaCode(627, 645, "TX"),
-                                                                         new SSNAreaCode(528, 529, "UT"),
-                                                                         new SSNAreaCode(646, 647, "UT"),
-                                                                         new SSNAreaCode(8, 9, "VT"),
-                                                                         new SSNAreaCode(223, 231, "VA"),
-                                                                         new SSNAreaCode(691, 699, "VA"),
-                                                                         new SSNAreaCode(531, 539, "WA"),
-                                                                         new SSNAreaCode(232, 236, "WV"),
-                                                                         new SSNAreaCode(387, 399, "WI"),
-                                                                         new SSNAreaCode(520, 520, "WY"),
-                                                                     };
+        private static readonly List<ICityStateZipData> CityStateZips = new List<ICityStateZipData>();
+        private static readonly List<ISSNAreaCodeData> SSNAreaCodes = new List<ISSNAreaCodeData>();
 
         private static readonly List<string> StreetTypes = new List<string>
                                                                {
@@ -146,7 +45,7 @@ namespace EfficientlyLazy.IdentityGenerator
             {
                 if (stream == null)
                 {
-                    throw new InvalidOperationException("NamesFirst.txt Embedded Resource Not Found");
+                    throw new InvalidOperationException("NamesFirst.data Embedded Resource Not Found");
                 }
 
                 using (var cr = new GZipStream(stream, CompressionMode.Decompress))
@@ -160,26 +59,26 @@ namespace EfficientlyLazy.IdentityGenerator
                             switch (parts[1])
                             {
                                 case "M": // Male
-                                    FirstNames.Add(new FirstName
+                                    FirstNames.Add(new FirstNameData
                                                        {
                                                            Gender = Gender.Male,
                                                            Name = parts[0]
                                                        });
                                     break;
                                 case "F": // Female
-                                    FirstNames.Add(new FirstName
+                                    FirstNames.Add(new FirstNameData
                                                        {
                                                            Gender = Gender.Female,
                                                            Name = parts[0]
                                                        });
                                     break;
                                 case "B": // Male or Female
-                                    FirstNames.Add(new FirstName
+                                    FirstNames.Add(new FirstNameData
                                                        {
                                                            Gender = Gender.Male,
                                                            Name = parts[0]
                                                        });
-                                    FirstNames.Add(new FirstName
+                                    FirstNames.Add(new FirstNameData
                                                        {
                                                            Gender = Gender.Female,
                                                            Name = parts[0]
@@ -216,7 +115,7 @@ namespace EfficientlyLazy.IdentityGenerator
             {
                 if (stream == null)
                 {
-                    throw new InvalidOperationException("CityStateZips.txt Embedded Resource Not Found");
+                    throw new InvalidOperationException("CityStateZips.data Embedded Resource Not Found");
                 }
 
                 using (var cr = new GZipStream(stream, CompressionMode.Decompress))
@@ -232,7 +131,7 @@ namespace EfficientlyLazy.IdentityGenerator
                             var stateAbbreviation = parts[1];
                             var zip = parts[3];
 
-                            CityStateZips.Add(new CityStateZip
+                            CityStateZips.Add(new CityStateZipData
                                                   {
                                                       City = city,
                                                       StateAbbreviation = stateAbbreviation,
@@ -244,16 +143,52 @@ namespace EfficientlyLazy.IdentityGenerator
                 }
             }
 
+            using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("EfficientlyLazy.IdentityGenerator.DataFiles.SSNAreaCodes.data"))
+            {
+                if (stream == null)
+                {
+                    throw new InvalidOperationException("SSNAreaCodes.data Embedded Resource Not Found");
+                }
+
+                using (var cr = new GZipStream(stream, CompressionMode.Decompress))
+                {
+                    using (var sr = new StreamReader(cr))
+                    {
+                        while ((line = sr.ReadLine()) != null)
+                        {
+                            var parts = line.Split('|');
+
+                            SSNAreaCodes.Add(new SSNAreaCodeData
+                                                 {
+                                                     StateAbbreviation = parts[0],
+                                                     Minimum = int.Parse(parts[1]),
+                                                     Maximum = int.Parse(parts[2])
+                                                 });
+                        }
+                    }
+                }
+            }
+
             FirstNames = FirstNames.OrderBy(x => x.Name).ToList();
             LastNames = LastNames.OrderBy(x => x).ToList();
             CityStateZips = CityStateZips.OrderBy(x => x.StateAbbreviation).ThenBy(x => x.City).ToList();
-
+            
             Random = new Random(DateTime.Now.Millisecond);
         }
         
         #endregion
 
-        public static IGeneratorOptions SetOptions()
+        #region DEFAULTS
+        private const bool DEFAULT_INCLUDE_SSN = false;
+        private const bool DEFAULT_INCLUDE_DOB = false;
+        private const bool DEFAULT_INCLUDE_ADDRESS = false;
+        private const GenderFilter DEFAULT_GENDER_FILTER = GenderFilter.Both;
+
+        private const int DEFAULT_MINIMUM_AGE = 1;
+        private const int DEFAULT_MAXIMUM_AGE = 100;
+        #endregion
+
+        public static IGeneratorOptions Configure()
         {
             return new GeneratorOptions();
         }
@@ -270,34 +205,43 @@ namespace EfficientlyLazy.IdentityGenerator
 
             public IGeneratorOptions IncludeSSN()
             {
-                return IncludeSSN(true);
-            }
-
-            public IGeneratorOptions IncludeSSN(bool include)
-            {
-                _includeSSN = include;
+                _includeSSN = true;
                 return this;
             }
 
-            public IGeneratorOptions IncludeDOB()
+            public IGeneratorOptions ExcludeSSN()
             {
-                return IncludeDOB(true);
+                _includeSSN = false;
+                return this;
             }
 
-            public IGeneratorOptions IncludeDOB(bool include)
+            public IGeneratorOptions IncludeDOB(int minimum, int maximum)
             {
-                _includeDOB = include;
+                _includeDOB = true;
+                _minimumAge = minimum;
+                _maximumAge = maximum;
+
+                return this;
+            }
+
+            public IGeneratorOptions ExcludeDOB()
+            {
+                _includeDOB = false;
+                _minimumAge = DEFAULT_MINIMUM_AGE;
+                _maximumAge = DEFAULT_MAXIMUM_AGE;
+
                 return this;
             }
 
             public IGeneratorOptions IncludeAddress()
             {
-                return IncludeAddress(true);
+                _includeAddress = true;
+                return this;
             }
 
-            public IGeneratorOptions IncludeAddress(bool include)
+            public IGeneratorOptions ExcludeAddress()
             {
-                _includeAddress = include;
+                _includeAddress = false;
                 return this;
             }
 
@@ -307,14 +251,7 @@ namespace EfficientlyLazy.IdentityGenerator
                 return this;
             }
 
-            public IGeneratorOptions SetAgeRange(int minimum, int maximum)
-            {
-                _minimumAge = minimum;
-                _maximumAge = maximum;
-                return this;
-            }
-
-            public IGenerator CreateGenerator()
+            public IGenerator Build()
             {
                 return new Generator
                            {
@@ -339,16 +276,6 @@ namespace EfficientlyLazy.IdentityGenerator
             MaximumAge = DEFAULT_MAXIMUM_AGE;
         }
 
-        #region DEFAULTS
-        private const bool DEFAULT_INCLUDE_SSN = false;
-        private const bool DEFAULT_INCLUDE_DOB = false;
-        private const bool DEFAULT_INCLUDE_ADDRESS = false;
-        private const GenderFilter DEFAULT_GENDER_FILTER = GenderFilter.Both;
-
-        private const int DEFAULT_MINIMUM_AGE = 1;
-        private const int DEFAULT_MAXIMUM_AGE = 100;
-        #endregion
-
         public bool IncludeSSN { get; private set; }
         public bool IncludeDOB { get; private set; }
         public bool IncludeAddress { get; private set; }
@@ -357,14 +284,9 @@ namespace EfficientlyLazy.IdentityGenerator
         public int MinimumAge { get; private set; }
         public int MaximumAge { get; private set; }
 
-        public static IName GenerateName()
-        {
-            return GenerateName(GenderFilter.Both);
-        }
-
         public static IName GenerateName(GenderFilter filter)
         {
-            FirstName first;
+            IFirstNameData first;
 
             switch (filter)
             {
@@ -468,7 +390,7 @@ namespace EfficientlyLazy.IdentityGenerator
             return DateTime.Now.AddYears(age * -1).AddDays(ageDays).Date;
         }
 
-        public IIdentity GenerateIdentity()
+        public IIdentity Generate()
         {
             var name = GenerateName(Genders);
             var ssn = IncludeSSN ? GenerateSSN() : string.Empty;
@@ -484,19 +406,19 @@ namespace EfficientlyLazy.IdentityGenerator
                        };
         }
 
-        public IEnumerable<IIdentity> GenerateIdentities(int number)
+        public IEnumerable<IIdentity> Generate(int number)
         {
             for (var i = 0; i < number; i++)
             {
-                yield return GenerateIdentity();
+                yield return Generate();
             }
         }
 
-        public void GenerateIdentities(int number, string delimiter, string filename)
+        public void Generate(int number, string delimiter, string filename)
         {
             using (var sw = new StreamWriter(filename, true))
             {
-                foreach (var identity in GenerateIdentities(number))
+                foreach (var identity in Generate(number))
                 {
                     sw.Write(string.Format("{1}{0}{2}{0}{2}{0}{3}{0}{4}", delimiter, identity.Name.First, identity.Name.Middle, identity.Name.Last, identity.Name.Gender));
 

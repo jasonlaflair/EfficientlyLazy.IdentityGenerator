@@ -25,14 +25,14 @@ namespace EfficientlyLazy.IdentityGenerator
 
         /// <summary>Generates a single identity base on defined settings.</summary>
         /// <returns>Single Random <see cref="Identity"/></returns>
-        IIdentity GenerateIdentity();
+        IIdentity Generate();
         
         /// <summary>Generates multiple identities base on defined settings.</summary>
         /// <param name="number">Number of identities to return.</param>
         /// <returns><see cref="IEnumerable{Identity}"/></returns>
-        IEnumerable<IIdentity> GenerateIdentities(int number);
+        IEnumerable<IIdentity> Generate(int number);
         
         /// <summary></summary>
-        void GenerateIdentities(int number, string delimiter, string filename);
+        void Generate(int number, string delimiter, string filename);
     }
 }

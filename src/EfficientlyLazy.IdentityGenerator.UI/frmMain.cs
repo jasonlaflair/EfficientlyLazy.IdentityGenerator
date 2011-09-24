@@ -51,15 +51,16 @@ namespace EfficientlyLazy.IdentityGenerator.UI
         {
             var gp = (GenParams)e.Argument;
 
-            var generator = Generator.SetOptions()
-                .IncludeAddress(gp.IncludeAddress)
-                .IncludeDOB(gp.IncludeDOB)
-                .SetGenderFilter(gp.Genders)
-                .IncludeSSN(gp.IncludeSSN)
-                .SetAgeRange(gp.MinimumAge, gp.MaximumAge)
-                .CreateGenerator();
+            var generatorOptions = Generator.Configure();
 
-            generator.GenerateIdentities(gp.Number, gp.Delimiter, gp.Filename);
+            generatorOptions = gp.IncludeAddress ? generatorOptions.IncludeAddress() : generatorOptions.ExcludeAddress();
+            generatorOptions = gp.IncludeDOB ? generatorOptions.IncludeDOB(gp.MinimumAge, gp.MaximumAge) : generatorOptions.ExcludeDOB();
+            generatorOptions = gp.IncludeSSN ? generatorOptions.IncludeSSN() : generatorOptions.ExcludeSSN();
+            generatorOptions = generatorOptions.SetGenderFilter(gp.Genders);
+
+            var generator = generatorOptions.Build();
+
+            generator.Generate(gp.Number, gp.Delimiter, gp.Filename);
         }
 
         private void frmMain_Load(object sender, EventArgs e)

@@ -10,3 +10,7 @@
 /src/EfficientlyLazy.IdentityGenerator.UI/obj
 /src/EfficientlyLazy.IdentityGenerator.UI/EfficientlyLazy.IdentityGenerator.UI.csproj.user
 /src/EfficientlyLazy.IdentityGenerator.UI/EfficientlyLazy.IdentityGenerator.UI.csproj.ReSharper
+/src/QuickTextFileCompressor/bin
+/src/QuickTextFileCompressor/obj
+/src/QuickTextFileCompressor/QuickTextFileCompressor.csproj.user
+/src/QuickTextFileCompressor/QuickTextFileCompressor.csproj.ReSharper

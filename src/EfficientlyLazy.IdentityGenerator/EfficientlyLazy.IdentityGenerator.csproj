@@ -47,14 +47,20 @@
       <Link>SharedAssemblyInfo.cs</Link>
     </Compile>
     <Compile Include="Entity\Address.cs" />
+    <Compile Include="Entity\CityStateZipData.cs" />
+    <Compile Include="Entity\FirstNameData.cs" />
     <Compile Include="Entity\Gender.cs" />
     <Compile Include="Entity\GenderFilter.cs" />
     <Compile Include="Entity\IAddress.cs" />
+    <Compile Include="Entity\ICityStateZipData.cs" />
     <Compile Include="Entity\Identity.cs" />
+    <Compile Include="Entity\IFirstNameData.cs" />
     <Compile Include="Entity\IIdentity.cs" />
     <Compile Include="Entity\IName.cs" />
+    <Compile Include="Entity\ISSNAreaCodeData.cs" />
     <Compile Include="Entity\IState.cs" />
     <Compile Include="Entity\Name.cs" />
+    <Compile Include="Entity\SSNAreaCodeData.cs" />
     <Compile Include="Entity\State.cs" />
     <Compile Include="ExtensionMethods.cs" />
     <Compile Include="Generator.cs" />
@@ -66,11 +72,15 @@
     <Content Include="DataFiles\CityStateZips.txt" />
     <Content Include="DataFiles\NamesFirst.txt" />
     <Content Include="DataFiles\NamesLast.txt" />
+    <Content Include="DataFiles\SSNAreaCodes.txt" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="DataFiles\CityStateZips.data" />
     <EmbeddedResource Include="DataFiles\NamesFirst.data" />
     <EmbeddedResource Include="DataFiles\NamesLast.data" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="DataFiles\SSNAreaCodes.data" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
