@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
@@ -8,210 +9,114 @@ using EfficientlyLazy.IdentityGenerator.Entity;
 
 namespace EfficientlyLazy.IdentityGenerator
 {
+    /// <summary></summary>
     public class Generator : IGenerator
     {
-        #region Pre-Processing
-        
-        private static readonly List<IFirstNameData> FirstNames = new List<IFirstNameData>();
-        private static readonly List<string> LastNames = new List<string>();
-        private static readonly List<ICityStateZipData> CityStateZips = new List<ICityStateZipData>();
-        private static readonly List<ISSNAreaCodeData> SSNAreaCodes = new List<ISSNAreaCodeData>();
+        internal INameData NameData;
+        internal bool InternalNameData;
+        internal IAddressData AddressData;
+        internal bool InternalAddressData;
+        internal IEnumerable<ISSNAreaCodeData> SSNAreaCodeData;
+        internal bool InternalSSNAreaCodeData;
 
-        private static readonly List<string> StreetTypes = new List<string>
-                                                               {
-                                                                   "St",
-                                                                   "Ave"
-                                                               };
-
-        private static readonly List<string> Directions = new List<string>
-                                                              {
-                                                                  "N",
-                                                                  "NW",
-                                                                  "W",
-                                                                  "SW",
-                                                                  "S",
-                                                                  "SE",
-                                                                  "E",
-                                                                  "NE"
-                                                              };
-
-        internal static readonly Random Random;
-
-        static Generator()
-        {
-            string line;
-
-            using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("EfficientlyLazy.IdentityGenerator.DataFiles.NamesFirst.data"))
-            {
-                if (stream == null)
-                {
-                    throw new InvalidOperationException("NamesFirst.data Embedded Resource Not Found");
-                }
-
-                using (var cr = new GZipStream(stream, CompressionMode.Decompress))
-                {
-                    using (var sr = new StreamReader(cr))
-                    {
-                        while ((line = sr.ReadLine()) != null)
-                        {
-                            var parts = line.Split('|');
-
-                            switch (parts[1])
-                            {
-                                case "M": // Male
-                                    FirstNames.Add(new FirstNameData
-                                                       {
-                                                           Gender = Gender.Male,
-                                                           Name = parts[0]
-                                                       });
-                                    break;
-                                case "F": // Female
-                                    FirstNames.Add(new FirstNameData
-                                                       {
-                                                           Gender = Gender.Female,
-                                                           Name = parts[0]
-                                                       });
-                                    break;
-                                case "B": // Male or Female
-                                    FirstNames.Add(new FirstNameData
-                                                       {
-                                                           Gender = Gender.Male,
-                                                           Name = parts[0]
-                                                       });
-                                    FirstNames.Add(new FirstNameData
-                                                       {
-                                                           Gender = Gender.Female,
-                                                           Name = parts[0]
-                                                       });
-                                    break;
-                                default:
-                                    throw new InvalidOperationException(string.Format("Invalid Line: '{0}'", line));
-                            }
-                        }
-                    }
-                }
-            }
-
-            using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("EfficientlyLazy.IdentityGenerator.DataFiles.NamesLast.data"))
-            {
-                if (stream == null)
-                {
-                    throw new InvalidOperationException("NamesLast.txt Embedded Resource Not Found");
-                }
-
-                using (var cr = new GZipStream(stream, CompressionMode.Decompress))
-                {
-                    using (var sr = new StreamReader(cr))
-                    {
-                        while ((line = sr.ReadLine()) != null)
-                        {
-                            LastNames.Add(line);
-                        }
-                    }
-                }
-            }
-
-            using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("EfficientlyLazy.IdentityGenerator.DataFiles.CityStateZips.data"))
-            {
-                if (stream == null)
-                {
-                    throw new InvalidOperationException("CityStateZips.data Embedded Resource Not Found");
-                }
-
-                using (var cr = new GZipStream(stream, CompressionMode.Decompress))
-                {
-                    using (var sr = new StreamReader(cr))
-                    {
-                        while ((line = sr.ReadLine()) != null)
-                        {
-                            var parts = line.Split('|');
-
-                            var stateName = parts[0];
-                            var city = parts[2];
-                            var stateAbbreviation = parts[1];
-                            var zip = parts[3];
-
-                            CityStateZips.Add(new CityStateZipData
-                                                  {
-                                                      City = city,
-                                                      StateAbbreviation = stateAbbreviation,
-                                                      StateName = stateName,
-                                                      ZipCode = zip
-                                                  });
-                        }
-                    }
-                }
-            }
-
-            using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("EfficientlyLazy.IdentityGenerator.DataFiles.SSNAreaCodes.data"))
-            {
-                if (stream == null)
-                {
-                    throw new InvalidOperationException("SSNAreaCodes.data Embedded Resource Not Found");
-                }
-
-                using (var cr = new GZipStream(stream, CompressionMode.Decompress))
-                {
-                    using (var sr = new StreamReader(cr))
-                    {
-                        while ((line = sr.ReadLine()) != null)
-                        {
-                            var parts = line.Split('|');
-
-                            SSNAreaCodes.Add(new SSNAreaCodeData
-                                                 {
-                                                     StateAbbreviation = parts[0],
-                                                     Minimum = int.Parse(parts[1]),
-                                                     Maximum = int.Parse(parts[2])
-                                                 });
-                        }
-                    }
-                }
-            }
-
-            FirstNames = FirstNames.OrderBy(x => x.Name).ToList();
-            LastNames = LastNames.OrderBy(x => x).ToList();
-            CityStateZips = CityStateZips.OrderBy(x => x.StateAbbreviation).ThenBy(x => x.City).ToList();
-            
-            Random = new Random(DateTime.Now.Millisecond);
-        }
-        
-        #endregion
+        private readonly Random _random;
 
         #region DEFAULTS
-        private const bool DEFAULT_INCLUDE_SSN = false;
-        private const bool DEFAULT_INCLUDE_DOB = false;
-        private const bool DEFAULT_INCLUDE_ADDRESS = false;
         private const GenderFilter DEFAULT_GENDER_FILTER = GenderFilter.Both;
-
         private const int DEFAULT_MINIMUM_AGE = 1;
         private const int DEFAULT_MAXIMUM_AGE = 100;
         #endregion
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
         public static IGeneratorOptions Configure()
         {
             return new GeneratorOptions();
         }
 
-        private class GeneratorOptions : IGeneratorOptions
+        internal class GeneratorOptions : IGeneratorOptions
         {
-            private bool _includeSSN = DEFAULT_INCLUDE_SSN;
-            private bool _includeDOB = DEFAULT_INCLUDE_DOB;
-            private bool _includeAddress = DEFAULT_INCLUDE_ADDRESS;
+            private bool _includeName;
+            private bool _includeSSN;
+            private bool _includeDOB;
+            private bool _includeAddress;
             private GenderFilter _genderFilter = DEFAULT_GENDER_FILTER;
 
             private int _minimumAge = DEFAULT_MINIMUM_AGE;
             private int _maximumAge = DEFAULT_MAXIMUM_AGE;
 
+            private INameData _nameData;
+            private IAddressData _addressData;
+            private IEnumerable<ISSNAreaCodeData> _ssnAreaCodeData;
+
+            public IGeneratorOptions IncludeName()
+            {
+                _includeName = true;
+                _genderFilter = GenderFilter.Both;
+                _nameData = null;
+
+                return this;
+            }
+
+            public IGeneratorOptions IncludeName(GenderFilter filter)
+            {
+                _includeName = true;
+                _genderFilter = filter;
+                _nameData = null;
+
+                return this;
+            }
+
+            public IGeneratorOptions IncludeName(INameData nameData)
+            {
+                _includeName = true;
+                _genderFilter = nameData.GenderFilter;
+                _nameData = nameData;
+
+                return this;
+            }
+
+            public IGeneratorOptions ExcludeName()
+            {
+                _includeName = false;
+                _genderFilter = GenderFilter.Both;
+                _nameData = null;
+
+                return this;
+            }
+
             public IGeneratorOptions IncludeSSN()
             {
                 _includeSSN = true;
+                _ssnAreaCodeData = null;
+
+                return this;
+            }
+
+            public IGeneratorOptions IncludeSSN(IEnumerable<ISSNAreaCodeData> ssnAreaCodeData)
+            {
+                _includeSSN = true;
+                _ssnAreaCodeData = ssnAreaCodeData;
+
                 return this;
             }
 
             public IGeneratorOptions ExcludeSSN()
             {
                 _includeSSN = false;
+                _ssnAreaCodeData = null;
+
+                return this;
+            }
+
+            public IGeneratorOptions IncludeDOB()
+            {
+                _includeDOB = true;
+                _minimumAge = DEFAULT_MINIMUM_AGE;
+                _maximumAge = DEFAULT_MAXIMUM_AGE;
+
                 return this;
             }
 
@@ -236,46 +141,76 @@ namespace EfficientlyLazy.IdentityGenerator
             public IGeneratorOptions IncludeAddress()
             {
                 _includeAddress = true;
+                _addressData = null;
+
+                return this;
+            }
+
+            public IGeneratorOptions IncludeAddress(IAddressData addressData)
+            {
+                _includeAddress = true;
+                _addressData = addressData;
+
                 return this;
             }
 
             public IGeneratorOptions ExcludeAddress()
             {
                 _includeAddress = false;
-                return this;
-            }
-
-            public IGeneratorOptions SetGenderFilter(GenderFilter filter)
-            {
-                _genderFilter = filter;
+                _addressData = null;
                 return this;
             }
 
             public IGenerator Build()
             {
-                return new Generator
-                           {
-                               IncludeAddress = _includeAddress,
-                               IncludeDOB = _includeDOB,
-                               Genders = _genderFilter,
-                               IncludeSSN = _includeSSN,
-                               MaximumAge = _maximumAge,
-                               MinimumAge = _minimumAge
-                           };
+                var generator = new Generator
+                    {
+                        IncludeName = _includeName,
+                        IncludeAddress = _includeAddress,
+                        IncludeDOB = _includeDOB,
+                        Genders = _genderFilter,
+                        IncludeSSN = _includeSSN,
+                        MaximumAge = _maximumAge,
+                        MinimumAge = _minimumAge
+                    };
+
+                if (_includeName && _nameData == null)
+                {
+                    generator.LoadInternalNameData(_genderFilter);
+                }
+                else if (_includeName)
+                {
+                    generator.LoadInternalNameData(_nameData);
+                }
+
+                if (_includeAddress && _addressData == null)
+                {
+                    generator.LoadInternalAddressData();
+                }
+                else if (_includeAddress)
+                {
+                    generator.LoadInternalAddressData(_addressData);
+                }
+
+                if (_includeSSN && _ssnAreaCodeData == null)
+                {
+                    generator.LoadInternalSSNAreaCodeData();
+                }
+                else if (_includeSSN)
+                {
+                    generator.LoadInternalSSNAreaCodeData(_ssnAreaCodeData);
+                }
+
+                return generator;
             }
         }
 
         private Generator()
         {
-            IncludeSSN = DEFAULT_INCLUDE_SSN;
-            IncludeDOB = DEFAULT_INCLUDE_DOB;
-            IncludeAddress = DEFAULT_INCLUDE_ADDRESS;
-            Genders = DEFAULT_GENDER_FILTER;
-
-            MinimumAge = DEFAULT_MINIMUM_AGE;
-            MaximumAge = DEFAULT_MAXIMUM_AGE;
+            _random = RandomCreator.GenerateCryptographicSeededRandom();
         }
 
+        public bool IncludeName { get; private set; }
         public bool IncludeSSN { get; private set; }
         public bool IncludeDOB { get; private set; }
         public bool IncludeAddress { get; private set; }
@@ -284,27 +219,27 @@ namespace EfficientlyLazy.IdentityGenerator
         public int MinimumAge { get; private set; }
         public int MaximumAge { get; private set; }
 
-        public static IName GenerateName(GenderFilter filter)
+        public virtual IName GenerateName(GenderFilter filter)
         {
             IFirstNameData first;
 
             switch (filter)
             {
                 case GenderFilter.Female:
-                    first = FirstNames.GetRandom(x => x.Gender == Gender.Female);
+                    first = NameData.FirstNameData.GetRandom(x => x.Gender == Gender.Female);
                     break;
                 case GenderFilter.Male:
-                    first = FirstNames.GetRandom(x => x.Gender == Gender.Male);
+                    first = NameData.FirstNameData.GetRandom(x => x.Gender == Gender.Male);
                     break;
                 case GenderFilter.Both:
-                    first = FirstNames.GetRandom();
+                    first = NameData.FirstNameData.GetRandom();
                     break;
                 default:
                     throw new ArgumentOutOfRangeException("filter");
             }
 
-            var middle = FirstNames.GetRandom(x => x.Gender == first.Gender);
-            var last = LastNames.GetRandom();
+            var middle = NameData.FirstNameData.GetRandom(x => x.Gender == first.Gender);
+            var last = NameData.LastNameData.GetRandom();
 
             return new Name
                        {
@@ -315,26 +250,26 @@ namespace EfficientlyLazy.IdentityGenerator
                        };
         }
 
-        public static string GenerateSSN()
+        public virtual string GenerateSSN()
         {
             return GenerateSSN(string.Empty);
         }
 
-        public static string GenerateSSN(string stateAbbreviation)
+        public virtual string GenerateSSN(string stateAbbreviation)
         {
             var ssn = string.Empty;
-            
-            var areaCode = SSNAreaCodes.FirstOrDefault(x => x.StateAbbreviation == stateAbbreviation);
+
+            var areaCode = SSNAreaCodeData.FirstOrDefault(x => x.StateAbbreviation == stateAbbreviation);
 
             if (areaCode != null)
             {
-                var digits = Random.Next(areaCode.Minimum, areaCode.Maximum + 1);
+                var digits = _random.Next(areaCode.Minimum, areaCode.Maximum + 1);
                 ssn = digits.ToString().PadLeft(3, '0');
             }
 
             do
             {
-                var digit = Random.Next(0, 10);
+                var digit = _random.Next(0, 10);
                 ssn += digit.ToString();
             }
             while (ssn.Length < 9);
@@ -342,9 +277,9 @@ namespace EfficientlyLazy.IdentityGenerator
             return ssn;
         }
 
-        public static IAddress GenerateAddress()
+        public virtual IAddress GenerateAddress()
         {
-            var cityStateZip = CityStateZips.GetRandom();
+            var cityStateZip = AddressData.CityStateZips.GetRandom();
 
             var address = new Address
                               {
@@ -357,11 +292,11 @@ namespace EfficientlyLazy.IdentityGenerator
                                   ZipCode = cityStateZip.ZipCode
                               };
 
-            var streetType = StreetTypes.GetRandom();
-            var direction = Directions.GetRandom();
+            var streetType = AddressData.StreetTypes.GetRandom();
+            var direction = AddressData.Directions.GetRandom();
 
-            var streetNumber = Random.Next(1000, 10000);
-            var street = Random.Next(1, 100);
+            var streetNumber = _random.Next(1000, 10000);
+            var street = _random.Next(1, 100);
 
             switch (street.ToString()[street.ToString().Length - 1])
             {
@@ -382,15 +317,58 @@ namespace EfficientlyLazy.IdentityGenerator
             return address;
         }
 
-        public static DateTime GenerateDOB(int youngestAge, int oldestAge)
-        {
-            var age = Random.Next(youngestAge, oldestAge);
-            var ageDays = Random.Next(0, 365);
+        #region Date Of Birth
 
-            return DateTime.Now.AddYears(age * -1).AddDays(ageDays).Date;
+        private int _dobPossibilities;
+        private int _dobClearThreshold;
+        private readonly Hashtable _dobHistory = new Hashtable();
+
+        public virtual DateTime GenerateDOB()
+        {
+            return GenerateDOB(MinimumAge, MaximumAge);
         }
 
-        public IIdentity Generate()
+        public virtual DateTime GenerateDOB(int youngestAge, int oldestAge)
+        {
+            if (_dobPossibilities == 0)
+            {
+                _dobPossibilities = (MaximumAge - MinimumAge) * 365;
+                _dobClearThreshold = (int)(_dobPossibilities * 0.95);
+                _dobHistory.Clear();
+            }
+
+            if (_dobHistory.Count >= _dobClearThreshold)
+            {
+                _dobHistory.Clear();
+            }
+
+            var isUnique = false;
+            var dob = DateTime.MinValue;
+
+            while (!isUnique)
+            {
+                var years = _random.Next(MinimumAge, MaximumAge);
+                var days = _random.Next(0, 365);
+
+                var ts = new TimeSpan((years * 365) + days, 0, 0);
+
+                dob = DateTime.Today.Subtract(ts).Date;
+
+                if (_dobHistory.ContainsKey(dob))
+                {
+                    continue;
+                }
+
+                _dobHistory.Add(dob, dob);
+                isUnique = true;
+            }
+
+            return dob;
+        }
+
+        #endregion
+
+        public virtual IIdentity Generate()
         {
             var name = GenerateName(Genders);
             var ssn = IncludeSSN ? GenerateSSN() : string.Empty;
@@ -406,7 +384,7 @@ namespace EfficientlyLazy.IdentityGenerator
                        };
         }
 
-        public IEnumerable<IIdentity> Generate(int number)
+        public virtual IEnumerable<IIdentity> Generate(int number)
         {
             for (var i = 0; i < number; i++)
             {
@@ -414,7 +392,7 @@ namespace EfficientlyLazy.IdentityGenerator
             }
         }
 
-        public void Generate(int number, string delimiter, string filename)
+        public virtual void Generate(int number, string delimiter, string filename)
         {
             using (var sw = new StreamWriter(filename, true))
             {
@@ -440,6 +418,211 @@ namespace EfficientlyLazy.IdentityGenerator
                     sw.WriteLine();
                 }
             }
+        }
+
+        internal virtual void LoadInternalNameData(INameData nameData)
+        {
+            NameData = nameData;
+            InternalNameData = false;
+        }
+
+        internal virtual void LoadInternalNameData(GenderFilter genderFilter)
+        {
+            string line;
+
+            var firstNames = new List<IFirstNameData>();
+            var lastNames = new List<string>();
+
+            using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("EfficientlyLazy.IdentityGenerator.DataFiles.NamesFirst.data"))
+            {
+                if (stream == null)
+                {
+                    throw new InvalidOperationException("NamesFirst.data Embedded Resource Not Found");
+                }
+
+                using (var cr = new GZipStream(stream, CompressionMode.Decompress))
+                {
+                    using (var sr = new StreamReader(cr))
+                    {
+                        while ((line = sr.ReadLine()) != null)
+                        {
+                            var parts = line.Split('|');
+
+                            switch (parts[1])
+                            {
+                                case "M": // Male
+                                    firstNames.Add(new FirstNameData
+                                    {
+                                        Gender = Gender.Male,
+                                        Name = parts[0]
+                                    });
+                                    break;
+                                case "F": // Female
+                                    firstNames.Add(new FirstNameData
+                                    {
+                                        Gender = Gender.Female,
+                                        Name = parts[0]
+                                    });
+                                    break;
+                                case "B": // Male or Female
+                                    firstNames.Add(new FirstNameData
+                                    {
+                                        Gender = Gender.Male,
+                                        Name = parts[0]
+                                    });
+                                    firstNames.Add(new FirstNameData
+                                    {
+                                        Gender = Gender.Female,
+                                        Name = parts[0]
+                                    });
+                                    break;
+                                default:
+                                    throw new InvalidOperationException(string.Format("Invalid Line: '{0}'", line));
+                            }
+                        }
+                    }
+                }
+            }
+
+            using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("EfficientlyLazy.IdentityGenerator.DataFiles.NamesLast.data"))
+            {
+                if (stream == null)
+                {
+                    throw new InvalidOperationException("NamesLast.txt Embedded Resource Not Found");
+                }
+
+                using (var cr = new GZipStream(stream, CompressionMode.Decompress))
+                {
+                    using (var sr = new StreamReader(cr))
+                    {
+                        while ((line = sr.ReadLine()) != null)
+                        {
+                            lastNames.Add(line);
+                        }
+                    }
+                }
+            }
+
+            NameData = new NameData
+                {
+                    FirstNameData = firstNames,
+                    GenderFilter = genderFilter,
+                    LastNameData = lastNames
+                };
+            InternalNameData = true;
+        }
+
+        internal virtual void LoadInternalAddressData(IAddressData addressData)
+        {
+            AddressData = addressData;
+            InternalAddressData = false;
+        }
+
+        internal virtual void LoadInternalAddressData()
+        {
+            var cszList = new List<ICityStateZipData>();
+
+            using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("EfficientlyLazy.IdentityGenerator.DataFiles.CityStateZips.data"))
+            {
+                if (stream == null)
+                {
+                    throw new InvalidOperationException("CityStateZips.data Embedded Resource Not Found");
+                }
+
+                using (var cr = new GZipStream(stream, CompressionMode.Decompress))
+                {
+                    using (var sr = new StreamReader(cr))
+                    {
+                        string line;
+
+                        while ((line = sr.ReadLine()) != null)
+                        {
+                            var parts = line.Split('|');
+
+                            var stateName = parts[0];
+                            var city = parts[2];
+                            var stateAbbreviation = parts[1];
+                            var zip = parts[3];
+
+                            cszList.Add(new CityStateZipData
+                            {
+                                City = city,
+                                StateAbbreviation = stateAbbreviation,
+                                StateName = stateName,
+                                ZipCode = zip
+                            });
+                        }
+                    }
+                }
+            }
+
+            var streetTypes = new List<string>
+                    {
+                        "St",
+                        "Ave"
+                    };
+
+            var directions = new List<string>
+                    {
+                        "N",
+                        "NW",
+                        "W",
+                        "SW",
+                        "S",
+                        "SE",
+                        "E",
+                        "NE"
+                    };
+
+            AddressData = new AddressData
+                {
+                    CityStateZips = cszList,
+                    Directions = directions,
+                    StreetTypes = streetTypes
+                };
+            InternalAddressData = true;
+        }
+
+        internal virtual void LoadInternalSSNAreaCodeData(IEnumerable<ISSNAreaCodeData> ssnAreaCodeData)
+        {
+            SSNAreaCodeData = ssnAreaCodeData;
+            InternalSSNAreaCodeData = false;
+        }
+
+        internal virtual void LoadInternalSSNAreaCodeData()
+        {
+            var ssnAreaCodes = new List<ISSNAreaCodeData>();
+
+            using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("EfficientlyLazy.IdentityGenerator.DataFiles.SSNAreaCodes.data"))
+            {
+                if (stream == null)
+                {
+                    throw new InvalidOperationException("SSNAreaCodes.data Embedded Resource Not Found");
+                }
+
+                using (var cr = new GZipStream(stream, CompressionMode.Decompress))
+                {
+                    using (var sr = new StreamReader(cr))
+                    {
+                        string line;
+
+                        while ((line = sr.ReadLine()) != null)
+                        {
+                            var parts = line.Split('|');
+
+                            ssnAreaCodes.Add(new SSNAreaCodeData
+                            {
+                                StateAbbreviation = parts[0],
+                                Minimum = int.Parse(parts[1]),
+                                Maximum = int.Parse(parts[2])
+                            });
+                        }
+                    }
+                }
+            }
+
+            SSNAreaCodeData = ssnAreaCodes;
+            InternalSSNAreaCodeData = true;
         }
     }
 }

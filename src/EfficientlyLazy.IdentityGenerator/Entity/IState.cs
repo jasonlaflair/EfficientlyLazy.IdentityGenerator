@@ -1,8 +1,14 @@
-﻿namespace EfficientlyLazy.IdentityGenerator.Entity
+﻿using System;
+
+namespace EfficientlyLazy.IdentityGenerator.Entity
 {
-    public interface IState
+    /// <summary></summary>
+    public interface IState : IEquatable<IState>
     {
+        /// <summary></summary>
         string Name { get; }
+        
+        /// <summary></summary>
         string Abbreviation { get; }
     }
 }

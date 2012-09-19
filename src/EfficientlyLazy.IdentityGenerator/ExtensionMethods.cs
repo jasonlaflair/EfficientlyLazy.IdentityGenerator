@@ -6,16 +6,27 @@ namespace EfficientlyLazy.IdentityGenerator
 {
     internal static class ExtensionMethods
     {
-        public static T GetRandom<T>(this IEnumerable<T> data, Func<T, bool> where)
-        {
-            var list = data.Where(where).ToList();
+        private static readonly Random _random;
 
-            return list[Generator.Random.Next(0, list.Count)];
+        static ExtensionMethods()
+        {
+            _random = RandomCreator.GenerateCryptographicSeededRandom();
         }
 
-        public static T GetRandom<T>(this IList<T> list)
+        public static T GetRandom<T>(this IEnumerable<T> data, Func<T, bool> where)
         {
-            return list[Generator.Random.Next(0, list.Count)];
+            var list = data.Where(where);
+
+            var index = _random.Next(0, list.Count());
+
+            return list.Skip(index).Take(1).Single();
+        }
+
+        public static T GetRandom<T>(this IEnumerable<T> data)
+        {
+            var index = _random.Next(0, data.Count());
+
+            return data.Skip(index).Take(1).Single();
         }
 
         public static string ToProperCase(this string value)

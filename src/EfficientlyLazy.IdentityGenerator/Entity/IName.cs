@@ -1,10 +1,20 @@
+using System;
+
 namespace EfficientlyLazy.IdentityGenerator.Entity
 {
-    public interface IName
+    /// <summary></summary>
+    public interface IName : IEquatable<IName>
     {
+        /// <summary></summary>
         string First { get; }
+
+        /// <summary></summary>
         string Middle { get; }
+        
+        /// <summary></summary>
         string Last { get; }
+        
+        /// <summary></summary>
         Gender Gender { get; }
     }
 }

@@ -15,6 +15,7 @@ namespace EfficientlyLazy.IdentityGenerator.UI
             public string Delimiter { get; set; }
             public int Number { get; set; }
 
+            public bool IncludeName { get; set; }
             public bool IncludeSSN { get; set; }
             public bool IncludeDOB { get; set; }
             public bool IncludeAddress { get; set; }
@@ -50,13 +51,13 @@ namespace EfficientlyLazy.IdentityGenerator.UI
         private void WorkerDoWork(object sender, DoWorkEventArgs e)
         {
             var gp = (GenParams)e.Argument;
-
+            
             var generatorOptions = Generator.Configure();
 
+            generatorOptions = gp.IncludeName ? generatorOptions.IncludeName(gp.Genders) : generatorOptions.ExcludeName();
             generatorOptions = gp.IncludeAddress ? generatorOptions.IncludeAddress() : generatorOptions.ExcludeAddress();
             generatorOptions = gp.IncludeDOB ? generatorOptions.IncludeDOB(gp.MinimumAge, gp.MaximumAge) : generatorOptions.ExcludeDOB();
             generatorOptions = gp.IncludeSSN ? generatorOptions.IncludeSSN() : generatorOptions.ExcludeSSN();
-            generatorOptions = generatorOptions.SetGenderFilter(gp.Genders);
 
             var generator = generatorOptions.Build();
 

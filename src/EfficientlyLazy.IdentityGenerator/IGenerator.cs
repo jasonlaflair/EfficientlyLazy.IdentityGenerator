@@ -1,20 +1,25 @@
+using System;
 using System.Collections.Generic;
 using EfficientlyLazy.IdentityGenerator.Entity;
 
 namespace EfficientlyLazy.IdentityGenerator
 {
+    /// <summary></summary>
     public interface IGenerator
     {
-        /// <summary>Includes SSN in identity generation (default: true)</summary>
+        /// <summary>Includes Name (first, middle, last) in identity generation (default: false)</summary>
+        bool IncludeName { get; }
+
+        /// <summary>Includes SSN in identity generation (default: false)</summary>
         bool IncludeSSN { get; }
-        
-        /// <summary>Includes Date Of Birth in identity generation (default: true)</summary>
+
+        /// <summary>Includes Date Of Birth in identity generation (default: false)</summary>
         bool IncludeDOB { get; }
-        
-        /// <summary>Includes Address (address line, city, state, zipcode) in identity generation (default: true)</summary>
+
+        /// <summary>Includes Address (address line, city, state, zipcode) in identity generation (default: false)</summary>
         bool IncludeAddress { get; }
-        
-        /// <summary>Includes Male names in identity generation (default: true)</summary>
+
+        /// <summary>Includes Male names in identity generation (default: false)</summary>
         GenderFilter Genders { get; }
         
         /// <summary>The minimum age use for random ages in identity generation (default: 1)</summary>
@@ -34,5 +39,23 @@ namespace EfficientlyLazy.IdentityGenerator
         
         /// <summary></summary>
         void Generate(int number, string delimiter, string filename);
+
+        /// <summary></summary>
+        IName GenerateName(GenderFilter filter);
+
+        /// <summary></summary>
+        string GenerateSSN();
+
+        /// <summary></summary>
+        string GenerateSSN(string stateAbbreviation);
+
+        /// <summary></summary>
+        IAddress GenerateAddress();
+
+        /// <summary></summary>
+        DateTime GenerateDOB();
+
+        /// <summary></summary>
+        DateTime GenerateDOB(int youngestAge, int oldestAge);
     }
 }

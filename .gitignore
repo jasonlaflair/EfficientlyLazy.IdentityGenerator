@@ -1,16 +1,16 @@
+# Build Folders (you can keep bin if you'd like, to store dlls and pdbs)
+bin
+obj
 
-/src/_ReSharper.EfficientlyLazy.IdentityGenerator
-/src/EfficientlyLazy.IdentityGenerator.suo
-/src/EfficientlyLazy.IdentityGenerator.5.0.ReSharper.user
-/src/EfficientlyLazy.IdentityGenerator/bin
-/src/EfficientlyLazy.IdentityGenerator/obj
-/src/EfficientlyLazy.IdentityGenerator/EfficientlyLazy.IdentityGenerator.csproj.user
-/src/EfficientlyLazy.IdentityGenerator/EfficientlyLazy.IdentityGenerator.csproj.ReSharper
-/src/EfficientlyLazy.IdentityGenerator.UI/bin
-/src/EfficientlyLazy.IdentityGenerator.UI/obj
-/src/EfficientlyLazy.IdentityGenerator.UI/EfficientlyLazy.IdentityGenerator.UI.csproj.user
-/src/EfficientlyLazy.IdentityGenerator.UI/EfficientlyLazy.IdentityGenerator.UI.csproj.ReSharper
-/src/QuickTextFileCompressor/bin
-/src/QuickTextFileCompressor/obj
-/src/QuickTextFileCompressor/QuickTextFileCompressor.csproj.user
-/src/QuickTextFileCompressor/QuickTextFileCompressor.csproj.ReSharper
+# mstest test results
+TestResults
+
+*.csproj.user
+*.suo
+_ReSharper.*
+
+# nuget packages
+/src/packages/**
+
+# build directory contents
+/build/**

@@ -1,8 +1,14 @@
-﻿namespace EfficientlyLazy.IdentityGenerator.Entity
+﻿using System;
+
+namespace EfficientlyLazy.IdentityGenerator.Entity
 {
-    public interface IFirstNameData
+    /// <summary></summary>
+    public interface IFirstNameData : IEquatable<IFirstNameData>
     {
+        /// <summary></summary>
         string Name { get; }
+
+        /// <summary></summary>
         Gender Gender { get; }
     }
 }

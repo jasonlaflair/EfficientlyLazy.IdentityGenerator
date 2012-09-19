@@ -12,6 +12,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Shared", "Shared", "{E1B988
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QuickTextFileCompressor", "QuickTextFileCompressor\QuickTextFileCompressor.csproj", "{B78DEE53-0691-4AE4-9513-1B3BBB8E2A39}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EfficientlyLazy.IdentityGenerator.Tests", "EfficientlyLazy.IdentityGenerator.Tests\EfficientlyLazy.IdentityGenerator.Tests.csproj", "{8278C41D-D201-4E1E-9D51-CDF914270608}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -29,6 +31,10 @@ Global
 		{B78DEE53-0691-4AE4-9513-1B3BBB8E2A39}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{B78DEE53-0691-4AE4-9513-1B3BBB8E2A39}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B78DEE53-0691-4AE4-9513-1B3BBB8E2A39}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8278C41D-D201-4E1E-9D51-CDF914270608}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8278C41D-D201-4E1E-9D51-CDF914270608}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8278C41D-D201-4E1E-9D51-CDF914270608}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8278C41D-D201-4E1E-9D51-CDF914270608}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

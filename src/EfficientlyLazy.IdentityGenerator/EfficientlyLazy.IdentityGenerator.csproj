@@ -25,7 +25,7 @@
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
+    <DebugType>none</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
@@ -47,7 +47,9 @@
       <Link>SharedAssemblyInfo.cs</Link>
     </Compile>
     <Compile Include="Entity\Address.cs" />
+    <Compile Include="Entity\AddressData.cs" />
     <Compile Include="Entity\CityStateZipData.cs" />
+    <Compile Include="Entity\IAddressData.cs" />
     <Compile Include="Entity\FirstNameData.cs" />
     <Compile Include="Entity\Gender.cs" />
     <Compile Include="Entity\GenderFilter.cs" />
@@ -57,9 +59,11 @@
     <Compile Include="Entity\IFirstNameData.cs" />
     <Compile Include="Entity\IIdentity.cs" />
     <Compile Include="Entity\IName.cs" />
+    <Compile Include="Entity\INameData.cs" />
     <Compile Include="Entity\ISSNAreaCodeData.cs" />
     <Compile Include="Entity\IState.cs" />
     <Compile Include="Entity\Name.cs" />
+    <Compile Include="Entity\NameData.cs" />
     <Compile Include="Entity\SSNAreaCodeData.cs" />
     <Compile Include="Entity\State.cs" />
     <Compile Include="ExtensionMethods.cs" />
@@ -67,6 +71,7 @@
     <Compile Include="IGenerator.cs" />
     <Compile Include="IGeneratorOptions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RandomCreator.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="DataFiles\CityStateZips.txt" />
