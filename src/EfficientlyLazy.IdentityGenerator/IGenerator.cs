@@ -4,58 +4,140 @@ using EfficientlyLazy.IdentityGenerator.Entity;
 
 namespace EfficientlyLazy.IdentityGenerator
 {
-    /// <summary></summary>
+    /// <summary>
+    /// Core for Indentity Generation.
+    /// </summary>
     public interface IGenerator
     {
-        /// <summary>Includes Name (first, middle, last) in identity generation (default: false)</summary>
+        /// <summary>
+        /// Includes Name (first, middle, last) in identity generation
+        /// </summary>
+        /// <value>
+        ///   <c>true</c> if [include name]; otherwise, <c>false</c>. (default: false)
+        /// </value>
         bool IncludeName { get; }
 
-        /// <summary>Includes SSN in identity generation (default: false)</summary>
+        /// <summary>
+        /// Includes SSN in identity generation
+        /// </summary>
+        /// <value>
+        ///   <c>true</c> if [include SSN]; otherwise, <c>false</c>. (default: false)
+        /// </value>
         bool IncludeSSN { get; }
 
-        /// <summary>Includes Date Of Birth in identity generation (default: false)</summary>
+        /// <summary>
+        /// Gets a value indicating whether [include SSN dashes].
+        /// </summary>
+        /// <value>
+        ///   <c>true</c> if [include SSN dashes]; otherwise, <c>false</c>.
+        /// </value>
+        bool IncludeSSNDashes { get; }
+
+        /// <summary>
+        /// Includes Date Of Birth in identity generation
+        /// </summary>
+        /// <value>
+        ///   <c>true</c> if [include DOB]; otherwise, <c>false</c>. (default: false)
+        /// </value>
         bool IncludeDOB { get; }
 
-        /// <summary>Includes Address (address line, city, state, zipcode) in identity generation (default: false)</summary>
+        /// <summary>
+        /// Includes Address (address line, city, state, zipcode) in identity generation
+        /// </summary>
+        /// <value>
+        ///   <c>true</c> if [include address]; otherwise, <c>false</c>. (default: false)
+        /// </value>
         bool IncludeAddress { get; }
 
-        /// <summary>Includes Male names in identity generation (default: false)</summary>
+        /// <summary>
+        /// Includes Male names in identity generation
+        /// </summary>
+        /// <value>
+        /// The <see cref="GenderFilter"/>. (default: Both)
+        /// </value>
         GenderFilter Genders { get; }
-        
-        /// <summary>The minimum age use for random ages in identity generation (default: 1)</summary>
+
+        /// <summary>
+        /// The minimum age use for random ages in identity generation
+        /// </summary>
+        /// <value>
+        /// The minimum age. (default: 1)
+        /// </value>
         int MinimumAge { get; }
-        
-        /// <summary>The maximum age use for random ages in identity generation (default: 100)</summary>
+
+        /// <summary>
+        /// The maximum age use for random ages in identity generation
+        /// </summary>
+        /// <value>
+        /// The maximum age. (default: 100)
+        /// </value>
         int MaximumAge { get; }
 
-        /// <summary>Generates a single identity base on defined settings.</summary>
-        /// <returns>Single Random <see cref="Identity"/></returns>
+        /// <summary>
+        /// Generates a single identity base on defined settings.
+        /// </summary>
+        /// <returns>
+        /// Single Random <see cref="IIdentity" />
+        /// </returns>
         IIdentity Generate();
-        
-        /// <summary>Generates multiple identities base on defined settings.</summary>
-        /// <param name="number">Number of identities to return.</param>
-        /// <returns><see cref="IEnumerable{Identity}"/></returns>
-        IEnumerable<IIdentity> Generate(int number);
-        
-        /// <summary></summary>
-        void Generate(int number, string delimiter, string filename);
 
-        /// <summary></summary>
+        /// <summary>
+        /// Generates multiple identities base on defined settings.
+        /// </summary>
+        /// <param name="number">Number of identities to return.</param>
+        /// <returns>
+        ///   <see cref="IEnumerable{IIdentity}" />
+        /// </returns>
+        IEnumerable<IIdentity> Generate(int number);
+
+        /// <summary>
+        /// Generates a CSV file.
+        /// </summary>
+        /// <param name="number">The number identities to generate.</param>
+        /// <param name="delimiter">The file record delimiter.</param>
+        /// <param name="filename">The output filename.</param>
+        void GenerateToFile(int number, string delimiter, string filename);
+
+        /// <summary>
+        /// Generates a random <see cref="IName" />.
+        /// </summary>
+        /// <param name="filter">The <see cref="GenderFilter" />.</param>
+        /// <returns>
+        ///   <see cref="IName" />
+        /// </returns>
         IName GenerateName(GenderFilter filter);
 
-        /// <summary></summary>
+        /// <summary>
+        /// Generates an SSN.
+        /// </summary>
+        /// <returns>
+        /// An SSN
+        /// </returns>
         string GenerateSSN();
 
-        /// <summary></summary>
+        /// <summary>
+        /// Generates an SSN.
+        /// </summary>
+        /// <param name="stateAbbreviation">The state the SSN should be based on.</param>
+        /// <returns>
+        /// An SSN
+        /// </returns>
         string GenerateSSN(string stateAbbreviation);
 
-        /// <summary></summary>
+        /// <summary>
+        /// Generates a random <see cref="IAddress" />.
+        /// </summary>
+        /// <returns>
+        ///   <see cref="IAddress" />
+        /// </returns>
         IAddress GenerateAddress();
 
-        /// <summary></summary>
+        /// <summary>
+        /// Generates a random Date Of Birth.
+        /// </summary>
+        /// <returns>
+        /// A Date Of Birth between the specified age ranges.
+        /// </returns>
         DateTime GenerateDOB();
-
-        /// <summary></summary>
-        DateTime GenerateDOB(int youngestAge, int oldestAge);
     }
 }

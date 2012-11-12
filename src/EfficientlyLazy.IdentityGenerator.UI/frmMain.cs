@@ -54,14 +54,14 @@ namespace EfficientlyLazy.IdentityGenerator.UI
             
             var generatorOptions = Generator.Configure();
 
-            generatorOptions = gp.IncludeName ? generatorOptions.IncludeName(gp.Genders) : generatorOptions.ExcludeName();
-            generatorOptions = gp.IncludeAddress ? generatorOptions.IncludeAddress() : generatorOptions.ExcludeAddress();
-            generatorOptions = gp.IncludeDOB ? generatorOptions.IncludeDOB(gp.MinimumAge, gp.MaximumAge) : generatorOptions.ExcludeDOB();
-            generatorOptions = gp.IncludeSSN ? generatorOptions.IncludeSSN() : generatorOptions.ExcludeSSN();
+            if (gp.IncludeName) generatorOptions.IncludeName(gp.Genders);
+            if (gp.IncludeAddress) generatorOptions.IncludeAddress();
+            if (gp.IncludeDOB) generatorOptions.IncludeDOB(gp.MinimumAge, gp.MaximumAge);
+            if (gp.IncludeSSN) generatorOptions.IncludeSSN();
 
             var generator = generatorOptions.Build();
 
-            generator.Generate(gp.Number, gp.Delimiter, gp.Filename);
+            generator.GenerateToFile(gp.Number, gp.Delimiter, gp.Filename);
         }
 
         private void frmMain_Load(object sender, EventArgs e)

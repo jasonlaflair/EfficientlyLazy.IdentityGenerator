@@ -22,7 +22,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <DocumentationFile>bin\Debug\EfficientlyLazy.IdentityGenerator.XML</DocumentationFile>
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>none</DebugType>
@@ -69,6 +69,7 @@
     <Compile Include="ExtensionMethods.cs" />
     <Compile Include="Generator.cs" />
     <Compile Include="IGenerator.cs" />
+    <Compile Include="IGeneratorConfiguration.cs" />
     <Compile Include="IGeneratorOptions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RandomCreator.cs" />

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Text.RegularExpressions;
 using EfficientlyLazy.IdentityGenerator.Entity;
 using Xunit;
 using Xunit.Extensions;
@@ -11,12 +12,12 @@ namespace EfficientlyLazy.IdentityGenerator.Tests
     public class GeneratorTests
     {
         private const int MAX_LOOP = 250;
-        private readonly IGenerator _generator;
+        private IGenerator _generator;
 
         public GeneratorTests()
         {
             Debug.Listeners.Add(new DefaultTraceListener());
-            
+
             _generator = Generator.Configure()
                 .IncludeAddress()
                 .IncludeDOB()
@@ -39,17 +40,60 @@ namespace EfficientlyLazy.IdentityGenerator.Tests
             {
                 list.Add(_generator.GenerateName(filter));
             }
-            
+
+            // Assert
+            Assert.Equal(MAX_LOOP, list.Distinct().Count());
+        }
+
+        [Fact]
+        public void GenerateSSN()
+        {
+            // Arrange
+            var list = new List<string>();
+
+            // Act
+            for (var i = 0; i < MAX_LOOP; i++)
+            {
+                list.Add(_generator.GenerateSSN());
+            }
+
+            var bad = list.GroupBy(x => x).Select(x => new
+            {
+                SSN = x.Key,
+                Records = x.Count()
+            }).Where(x => x.Records > 1).ToList();
+
+            foreach (var b in bad)
+            {
+                Debug.WriteLine("MAX: " + b.SSN + " - " + b.Records);
+            }
+
             // Assert
             Assert.Equal(MAX_LOOP, list.Distinct().Count());
         }
 
         [Theory]
-        [InlineData(null, null)]
-        [InlineData(10, 20)]
-        [InlineData(5, 50)]
-        [InlineData(60, 100)]
-        public void GenerateDOB(int? min, int? max)
+        [InlineData(true, @"\d{3}-\d{2}-\d{4}")]
+        [InlineData(false, @"\d{9}")]
+        public void GenerateSSN_Dashing(bool isDashed, string regexMatch)
+        {
+            // Arrange
+            _generator = Generator.Configure()
+                .IncludeAddress()
+                .IncludeDOB()
+                .IncludeName()
+                .IncludeSSN(isDashed)
+                .Build();
+
+            // Act
+            var ssn = _generator.GenerateSSN();
+
+            // Assert
+            Assert.True(Regex.IsMatch(ssn, regexMatch));
+        }
+
+        [Fact]
+        public void GenerateDOB()
         {
             // Arrange
             var list = new List<DateTime>();
@@ -57,14 +101,7 @@ namespace EfficientlyLazy.IdentityGenerator.Tests
             // Act
             for (var i = 0; i < MAX_LOOP; i++)
             {
-                if (min.HasValue && max.HasValue)
-                {
-                    list.Add(_generator.GenerateDOB(min.Value, max.Value));
-                }
-                else
-                {
-                    list.Add(_generator.GenerateDOB());
-                }
+                list.Add(_generator.GenerateDOB());
             }
 
             var bad = list.GroupBy(x => x).Select(x => new

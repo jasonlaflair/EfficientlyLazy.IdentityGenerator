@@ -5,21 +5,21 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Reflection;
+using System.Text.RegularExpressions;
 using EfficientlyLazy.IdentityGenerator.Entity;
 
 namespace EfficientlyLazy.IdentityGenerator
 {
-    /// <summary></summary>
-    public class Generator : IGenerator
+    /// <summary>
+    /// 
+    /// </summary>
+    public sealed class Generator : IGenerator
     {
-        internal INameData NameData;
-        internal bool InternalNameData;
-        internal IAddressData AddressData;
-        internal bool InternalAddressData;
-        internal IEnumerable<ISSNAreaCodeData> SSNAreaCodeData;
-        internal bool InternalSSNAreaCodeData;
+        internal INameData NameData { get; private set; }
+        internal IAddressData AddressData { get; private set; }
+        internal IEnumerable<ISSNAreaCodeData> SSNAreaCodeData { get; private set; }
 
-        private readonly Random _random;
+        private readonly RandomEngine _random = new RandomEngine();
 
         #region DEFAULTS
         private const GenderFilter DEFAULT_GENDER_FILTER = GenderFilter.Both;
@@ -28,198 +28,248 @@ namespace EfficientlyLazy.IdentityGenerator
         #endregion
 
         /// <summary>
-        /// 
+        /// Configures this instance.
         /// </summary>
         /// <returns></returns>
-        public static IGeneratorOptions Configure()
+        public static IGeneratorConfiguration Configure()
         {
             return new GeneratorOptions();
         }
 
-        internal class GeneratorOptions : IGeneratorOptions
+        internal class GeneratorOptions : IGeneratorConfiguration, IGeneratorOptions
         {
-            private bool _includeName;
-            private bool _includeSSN;
-            private bool _includeDOB;
-            private bool _includeAddress;
-            private GenderFilter _genderFilter = DEFAULT_GENDER_FILTER;
+            public bool NameIncluded { get; set; }
+            public bool SSNIncluded { get; set; }
+            public bool SSNDashed { get; set; }
+            public bool DOBIncluded { get; set; }
+            public bool AddressInclude { get; set; }
+            public GenderFilter GenderFilter { get; set; }
 
-            private int _minimumAge = DEFAULT_MINIMUM_AGE;
-            private int _maximumAge = DEFAULT_MAXIMUM_AGE;
+            public int MinimumAge { get; set; }
+            public int MaximumAge { get; set; }
 
-            private INameData _nameData;
-            private IAddressData _addressData;
-            private IEnumerable<ISSNAreaCodeData> _ssnAreaCodeData;
+            public INameData ExternalNameData { get; set; }
+            public IAddressData ExternalAddressData { get; set; }
+            public IEnumerable<ISSNAreaCodeData> ExternalSSNAreaCodeData { get; set; }
 
-            public IGeneratorOptions IncludeName()
+            public GeneratorOptions()
             {
-                _includeName = true;
-                _genderFilter = GenderFilter.Both;
-                _nameData = null;
+                GenderFilter = DEFAULT_GENDER_FILTER;
+                MinimumAge = DEFAULT_MINIMUM_AGE;
+                MaximumAge = DEFAULT_MAXIMUM_AGE;
+            }
+
+            public IGeneratorConfiguration IncludeName()
+            {
+                NameIncluded = true;
+                GenderFilter = GenderFilter.Both;
+                ExternalNameData = null;
 
                 return this;
             }
 
-            public IGeneratorOptions IncludeName(GenderFilter filter)
+            public IGeneratorConfiguration IncludeName(GenderFilter filter)
             {
-                _includeName = true;
-                _genderFilter = filter;
-                _nameData = null;
+                NameIncluded = true;
+                GenderFilter = filter;
+                ExternalNameData = null;
 
                 return this;
             }
 
-            public IGeneratorOptions IncludeName(INameData nameData)
+            public IGeneratorConfiguration IncludeName(INameData nameData)
             {
-                _includeName = true;
-                _genderFilter = nameData.GenderFilter;
-                _nameData = nameData;
+                NameIncluded = true;
+                GenderFilter = nameData.GenderFilter;
+                ExternalNameData = nameData;
 
                 return this;
             }
 
-            public IGeneratorOptions ExcludeName()
+            public IGeneratorConfiguration IncludeSSN()
             {
-                _includeName = false;
-                _genderFilter = GenderFilter.Both;
-                _nameData = null;
+                SSNIncluded = true;
+                SSNDashed = false;
+                ExternalSSNAreaCodeData = null;
 
                 return this;
             }
 
-            public IGeneratorOptions IncludeSSN()
+            public IGeneratorConfiguration IncludeSSN(bool makeDashed)
             {
-                _includeSSN = true;
-                _ssnAreaCodeData = null;
+                SSNIncluded = true;
+                SSNDashed = makeDashed;
+                ExternalSSNAreaCodeData = null;
 
                 return this;
             }
 
-            public IGeneratorOptions IncludeSSN(IEnumerable<ISSNAreaCodeData> ssnAreaCodeData)
+            public IGeneratorConfiguration IncludeSSN(IEnumerable<ISSNAreaCodeData> ssnAreaCodeData)
             {
-                _includeSSN = true;
-                _ssnAreaCodeData = ssnAreaCodeData;
+                SSNIncluded = true;
+                SSNDashed = false;
+                ExternalSSNAreaCodeData = ssnAreaCodeData;
 
                 return this;
             }
 
-            public IGeneratorOptions ExcludeSSN()
+            public IGeneratorConfiguration IncludeSSN(IEnumerable<ISSNAreaCodeData> ssnAreaCodeData, bool makeDashed)
             {
-                _includeSSN = false;
-                _ssnAreaCodeData = null;
+                SSNIncluded = true;
+                SSNDashed = makeDashed;
+                ExternalSSNAreaCodeData = ssnAreaCodeData;
 
                 return this;
             }
 
-            public IGeneratorOptions IncludeDOB()
+            public IGeneratorConfiguration IncludeDOB()
             {
-                _includeDOB = true;
-                _minimumAge = DEFAULT_MINIMUM_AGE;
-                _maximumAge = DEFAULT_MAXIMUM_AGE;
+                DOBIncluded = true;
+                MinimumAge = DEFAULT_MINIMUM_AGE;
+                MaximumAge = DEFAULT_MAXIMUM_AGE;
 
                 return this;
             }
 
-            public IGeneratorOptions IncludeDOB(int minimum, int maximum)
+            public IGeneratorConfiguration IncludeDOB(int minimum, int maximum)
             {
-                _includeDOB = true;
-                _minimumAge = minimum;
-                _maximumAge = maximum;
+                DOBIncluded = true;
+                MinimumAge = minimum;
+                MaximumAge = maximum;
 
                 return this;
             }
 
-            public IGeneratorOptions ExcludeDOB()
+            public IGeneratorConfiguration IncludeAddress()
             {
-                _includeDOB = false;
-                _minimumAge = DEFAULT_MINIMUM_AGE;
-                _maximumAge = DEFAULT_MAXIMUM_AGE;
+                AddressInclude = true;
+                ExternalAddressData = null;
 
                 return this;
             }
 
-            public IGeneratorOptions IncludeAddress()
+            public IGeneratorConfiguration IncludeAddress(IAddressData addressData)
             {
-                _includeAddress = true;
-                _addressData = null;
+                AddressInclude = true;
+                ExternalAddressData = addressData;
 
-                return this;
-            }
-
-            public IGeneratorOptions IncludeAddress(IAddressData addressData)
-            {
-                _includeAddress = true;
-                _addressData = addressData;
-
-                return this;
-            }
-
-            public IGeneratorOptions ExcludeAddress()
-            {
-                _includeAddress = false;
-                _addressData = null;
                 return this;
             }
 
             public IGenerator Build()
             {
-                var generator = new Generator
-                    {
-                        IncludeName = _includeName,
-                        IncludeAddress = _includeAddress,
-                        IncludeDOB = _includeDOB,
-                        Genders = _genderFilter,
-                        IncludeSSN = _includeSSN,
-                        MaximumAge = _maximumAge,
-                        MinimumAge = _minimumAge
-                    };
-
-                if (_includeName && _nameData == null)
-                {
-                    generator.LoadInternalNameData(_genderFilter);
-                }
-                else if (_includeName)
-                {
-                    generator.LoadInternalNameData(_nameData);
-                }
-
-                if (_includeAddress && _addressData == null)
-                {
-                    generator.LoadInternalAddressData();
-                }
-                else if (_includeAddress)
-                {
-                    generator.LoadInternalAddressData(_addressData);
-                }
-
-                if (_includeSSN && _ssnAreaCodeData == null)
-                {
-                    generator.LoadInternalSSNAreaCodeData();
-                }
-                else if (_includeSSN)
-                {
-                    generator.LoadInternalSSNAreaCodeData(_ssnAreaCodeData);
-                }
-
-                return generator;
+                return new Generator(this);
             }
         }
 
-        private Generator()
+        internal Generator(IGeneratorOptions options)
         {
-            _random = RandomCreator.GenerateCryptographicSeededRandom();
+            IncludeName = options.NameIncluded;
+            IncludeAddress = options.AddressInclude;
+            IncludeDOB = options.DOBIncluded;
+            Genders = options.GenderFilter;
+            IncludeSSN = options.SSNIncluded;
+            IncludeSSNDashes = options.SSNDashed;
+            MaximumAge = options.MaximumAge;
+            MinimumAge = options.MinimumAge;
+
+            if (IncludeName && options.ExternalNameData == null)
+            {
+                LoadInternalNameData(Genders);
+            }
+            else if (IncludeName)
+            {
+                LoadExternalNameData(options.ExternalNameData);
+            }
+
+            if (IncludeAddress && options.ExternalAddressData == null)
+            {
+                LoadInternalAddressData();
+            }
+            else if (IncludeAddress)
+            {
+                LoadExternalAddressData(options.ExternalAddressData);
+            }
+
+            if (IncludeSSN && options.ExternalSSNAreaCodeData == null)
+            {
+                LoadInternalSSNAreaCodeData();
+            }
+            else if (IncludeSSN)
+            {
+                LoadExternalSSNAreaCodeData(options.ExternalSSNAreaCodeData);
+            }
         }
 
+        /// <summary>
+        /// Includes Name (first, middle, last) in identity generation
+        /// </summary>
+        /// <value>
+        /// <c>true</c> if [include name]; otherwise, <c>false</c>. (default: false)
+        /// </value>
         public bool IncludeName { get; private set; }
+
+        /// <summary>
+        /// Includes SSN in identity generation (default: false)
+        /// </summary>
+        /// <value>
+        /// <c>true</c> if [include SSN]; otherwise, <c>false</c>. (default: false)
+        /// </value>
         public bool IncludeSSN { get; private set; }
+
+        /// <summary>
+        /// Gets a value indicating whether [SSN dashed].
+        /// </summary>
+        /// <value>
+        ///   <c>true</c> if [SSN dashed]; otherwise, <c>false</c>. (default: false)
+        /// </value>
+        public bool IncludeSSNDashes { get; private set; }
+
+        /// <summary>
+        /// Includes Date Of Birth in identity generation (default: false)
+        /// </summary>
+        /// <value>
+        /// <c>true</c> if [include DOB]; otherwise, <c>false</c>. (default: false)
+        /// </value>
         public bool IncludeDOB { get; private set; }
+
+        /// <summary>
+        /// Includes Address (address line, city, state, zipcode) in identity generation (default: false)
+        /// </summary>
+        /// <value>
+        /// <c>true</c> if [include address]; otherwise, <c>false</c>. (default: false)
+        /// </value>
         public bool IncludeAddress { get; private set; }
+
+        /// <summary>
+        /// Includes Male names in identity generation (default: Both)
+        /// </summary>
         public GenderFilter Genders { get; private set; }
 
+        /// <summary>
+        /// The minimum age use for random ages in identity generation (default: 1)
+        /// </summary>
+        /// <value>
+        /// The minimum age. (default: 1)
+        /// </value>
         public int MinimumAge { get; private set; }
+
+        /// <summary>
+        /// The maximum age use for random ages in identity generation (default: 100)
+        /// </summary>
+        /// <value>
+        /// The maximum age. (default: 100)
+        /// </value>
         public int MaximumAge { get; private set; }
 
-        public virtual IName GenerateName(GenderFilter filter)
+        /// <summary>
+        /// Generates a random <see cref="IName" />.
+        /// </summary>
+        /// <param name="filter">The <see cref="GenderFilter" />.</param>
+        /// <returns>
+        ///   <see cref="IName" />
+        /// </returns>
+        public IName GenerateName(GenderFilter filter)
         {
             IFirstNameData first;
 
@@ -250,12 +300,30 @@ namespace EfficientlyLazy.IdentityGenerator
                        };
         }
 
-        public virtual string GenerateSSN()
+        /// <summary>
+        /// Generates an SSN.
+        /// </summary>
+        /// <returns>
+        /// An SSN
+        /// </returns>
+        public string GenerateSSN()
         {
-            return GenerateSSN(string.Empty);
+            return GenerateSSN(string.Empty, IncludeSSNDashes);
         }
 
-        public virtual string GenerateSSN(string stateAbbreviation)
+        /// <summary>
+        /// Generates an SSN.
+        /// </summary>
+        /// <param name="stateAbbreviation">The state the SSN should be based on.</param>
+        /// <returns>
+        /// An SSN
+        /// </returns>
+        public string GenerateSSN(string stateAbbreviation)
+        {
+            return GenerateSSN(stateAbbreviation, IncludeSSNDashes);
+        }
+
+        internal string GenerateSSN(string stateAbbreviation, bool includeDashes)
         {
             var ssn = string.Empty;
 
@@ -274,10 +342,21 @@ namespace EfficientlyLazy.IdentityGenerator
             }
             while (ssn.Length < 9);
 
+            if (includeDashes)
+            {
+                ssn = Regex.Replace(ssn, @"(\d{3})(\d{2})(\d{4})", @"$1-$2-$3");
+            }
+
             return ssn;
         }
 
-        public virtual IAddress GenerateAddress()
+        /// <summary>
+        /// Generates a random <see cref="IAddress" />.
+        /// </summary>
+        /// <returns>
+        ///   <see cref="IAddress" />
+        /// </returns>
+        public IAddress GenerateAddress()
         {
             var cityStateZip = AddressData.CityStateZips.GetRandom();
 
@@ -323,12 +402,13 @@ namespace EfficientlyLazy.IdentityGenerator
         private int _dobClearThreshold;
         private readonly Hashtable _dobHistory = new Hashtable();
 
-        public virtual DateTime GenerateDOB()
-        {
-            return GenerateDOB(MinimumAge, MaximumAge);
-        }
-
-        public virtual DateTime GenerateDOB(int youngestAge, int oldestAge)
+        /// <summary>
+        /// Generates a random Date Of Birth.
+        /// </summary>
+        /// <returns>
+        /// A Date Of Birth between the specified age ranges.
+        /// </returns>
+        public DateTime GenerateDOB()
         {
             if (_dobPossibilities == 0)
             {
@@ -368,11 +448,17 @@ namespace EfficientlyLazy.IdentityGenerator
 
         #endregion
 
-        public virtual IIdentity Generate()
+        /// <summary>
+        /// Generates a single identity base on defined settings.
+        /// </summary>
+        /// <returns>
+        /// Single Random <see cref="IIdentity" />
+        /// </returns>
+        public IIdentity Generate()
         {
             var name = GenerateName(Genders);
             var ssn = IncludeSSN ? GenerateSSN() : string.Empty;
-            var dob = IncludeDOB ? (DateTime?)GenerateDOB(MinimumAge, MaximumAge) : null;
+            var dob = IncludeDOB ? (DateTime?)GenerateDOB() : null;
             var address = IncludeAddress ? GenerateAddress() : null;
 
             return new Identity
@@ -384,7 +470,14 @@ namespace EfficientlyLazy.IdentityGenerator
                        };
         }
 
-        public virtual IEnumerable<IIdentity> Generate(int number)
+        /// <summary>
+        /// Generates multiple identities base on defined settings.
+        /// </summary>
+        /// <param name="number">Number of identities to return.</param>
+        /// <returns>
+        ///   <see cref="IEnumerable{IIdentity}" />
+        /// </returns>
+        public IEnumerable<IIdentity> Generate(int number)
         {
             for (var i = 0; i < number; i++)
             {
@@ -392,7 +485,13 @@ namespace EfficientlyLazy.IdentityGenerator
             }
         }
 
-        public virtual void Generate(int number, string delimiter, string filename)
+        /// <summary>
+        /// Generates a CSV file.
+        /// </summary>
+        /// <param name="number">The number identities to generate.</param>
+        /// <param name="delimiter">The file record delimiter.</param>
+        /// <param name="filename">The output filename.</param>
+        public void GenerateToFile(int number, string delimiter, string filename)
         {
             using (var sw = new StreamWriter(filename, true))
             {
@@ -420,13 +519,12 @@ namespace EfficientlyLazy.IdentityGenerator
             }
         }
 
-        internal virtual void LoadInternalNameData(INameData nameData)
+        internal void LoadExternalNameData(INameData nameData)
         {
             NameData = nameData;
-            InternalNameData = false;
         }
 
-        internal virtual void LoadInternalNameData(GenderFilter genderFilter)
+        internal void LoadInternalNameData(GenderFilter genderFilter)
         {
             string line;
 
@@ -509,16 +607,14 @@ namespace EfficientlyLazy.IdentityGenerator
                     GenderFilter = genderFilter,
                     LastNameData = lastNames
                 };
-            InternalNameData = true;
         }
 
-        internal virtual void LoadInternalAddressData(IAddressData addressData)
+        internal void LoadExternalAddressData(IAddressData addressData)
         {
             AddressData = addressData;
-            InternalAddressData = false;
         }
 
-        internal virtual void LoadInternalAddressData()
+        internal void LoadInternalAddressData()
         {
             var cszList = new List<ICityStateZipData>();
 
@@ -580,16 +676,14 @@ namespace EfficientlyLazy.IdentityGenerator
                     Directions = directions,
                     StreetTypes = streetTypes
                 };
-            InternalAddressData = true;
         }
 
-        internal virtual void LoadInternalSSNAreaCodeData(IEnumerable<ISSNAreaCodeData> ssnAreaCodeData)
+        internal void LoadExternalSSNAreaCodeData(IEnumerable<ISSNAreaCodeData> ssnAreaCodeData)
         {
             SSNAreaCodeData = ssnAreaCodeData;
-            InternalSSNAreaCodeData = false;
         }
 
-        internal virtual void LoadInternalSSNAreaCodeData()
+        internal void LoadInternalSSNAreaCodeData()
         {
             var ssnAreaCodes = new List<ISSNAreaCodeData>();
 
@@ -622,7 +716,6 @@ namespace EfficientlyLazy.IdentityGenerator
             }
 
             SSNAreaCodeData = ssnAreaCodes;
-            InternalSSNAreaCodeData = true;
         }
     }
 }

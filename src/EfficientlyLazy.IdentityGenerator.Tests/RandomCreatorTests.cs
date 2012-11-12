@@ -9,8 +9,8 @@ namespace EfficientlyLazy.IdentityGenerator.Tests
         public void Verify_Different_Randoms_Are_Created()
         {
             // Arrange
-            var rnd1 = RandomCreator.GenerateCryptographicSeededRandom();
-            var rnd2 = RandomCreator.GenerateCryptographicSeededRandom();
+            var rnd1 = new RandomEngine();
+            var rnd2 = new RandomEngine();
 
             // Act
             var value1 = rnd1.Next();

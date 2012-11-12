@@ -19,7 +19,6 @@ namespace EfficientlyLazy.IdentityGenerator.Tests
             // Assert
             Assert.Equal(GenderFilter.Both, generator.Genders);
             Assert.True(generator.IncludeName);
-            Assert.True(((Generator)generator).InternalNameData);
             Assert.True(((Generator)generator).NameData.FirstNameData.Any());
             Assert.Equal(GenderFilter.Both, ((Generator)generator).NameData.GenderFilter);
             Assert.True(((Generator)generator).NameData.LastNameData.Any());
@@ -39,7 +38,6 @@ namespace EfficientlyLazy.IdentityGenerator.Tests
             // Assert
             Assert.Equal(filter, generator.Genders);
             Assert.True(generator.IncludeName);
-            Assert.True(((Generator)generator).InternalNameData);
             Assert.True(((Generator)generator).NameData.FirstNameData.Any());
             Assert.Equal(filter, ((Generator)generator).NameData.GenderFilter);
             Assert.True(((Generator)generator).NameData.LastNameData.Any());
@@ -74,7 +72,6 @@ namespace EfficientlyLazy.IdentityGenerator.Tests
             // Assertfilter
             Assert.Equal(GenderFilter.Female, generator.Genders);
             Assert.True(generator.IncludeName);
-            Assert.False(((Generator)generator).InternalNameData);
             Assert.True(((Generator)generator).NameData.FirstNameData.Count() == 1);
             Assert.Equal(GenderFilter.Female, ((Generator)generator).NameData.GenderFilter);
             Assert.True(((Generator)generator).NameData.LastNameData.Count() == 1);
@@ -90,7 +87,21 @@ namespace EfficientlyLazy.IdentityGenerator.Tests
 
             // Assert
             Assert.True(generator.IncludeSSN);
-            Assert.True(((Generator)generator).InternalSSNAreaCodeData);
+            Assert.False(generator.IncludeSSNDashes);
+            Assert.True(((Generator)generator).SSNAreaCodeData.Any());
+        }
+
+        [Fact]
+        public void Configure_IncludeSSN_No_Specify_Dashed()
+        {
+            // Act
+            var generator = Generator.Configure()
+                .IncludeSSN(true)
+                .Build();
+
+            // Assert
+            Assert.True(generator.IncludeSSN);
+            Assert.True(generator.IncludeSSNDashes);
             Assert.True(((Generator)generator).SSNAreaCodeData.Any());
         }
 
@@ -115,7 +126,32 @@ namespace EfficientlyLazy.IdentityGenerator.Tests
 
             // Assert
             Assert.True(generator.IncludeSSN);
-            Assert.False(((Generator)generator).InternalSSNAreaCodeData);
+            Assert.False(generator.IncludeSSNDashes);
+            Assert.True(((Generator)generator).SSNAreaCodeData.Count() == 1);
+        }
+
+        [Fact]
+        public void Configure_IncludeSSN_Specify_Data_Dashed()
+        {
+            // Arrange
+            var data = new List<ISSNAreaCodeData>
+                {
+                    new SSNAreaCodeData
+                        {
+                            Maximum = 100,
+                            Minimum = 050,
+                            StateAbbreviation = "MN"
+                        }
+                };
+
+            // Act
+            var generator = Generator.Configure()
+                .IncludeSSN(data, true)
+                .Build();
+
+            // Assert
+            Assert.True(generator.IncludeSSN);
+            Assert.True(generator.IncludeSSNDashes);
             Assert.True(((Generator)generator).SSNAreaCodeData.Count() == 1);
         }
 
@@ -157,7 +193,6 @@ namespace EfficientlyLazy.IdentityGenerator.Tests
 
             // Assert
             Assert.True(generator.IncludeAddress);
-            Assert.True(((Generator)generator).InternalAddressData);
             Assert.True(((Generator)generator).AddressData.CityStateZips.Any());
             Assert.True(((Generator)generator).AddressData.Directions.Any());
             Assert.True(((Generator)generator).AddressData.StreetTypes.Any());
@@ -190,7 +225,6 @@ namespace EfficientlyLazy.IdentityGenerator.Tests
 
             // Assert
             Assert.True(generator.IncludeAddress);
-            Assert.False(((Generator)generator).InternalAddressData);
             Assert.True(((Generator)generator).AddressData.CityStateZips.Count() == 1);
             Assert.True(((Generator)generator).AddressData.Directions.Count() == 1);
             Assert.True(((Generator)generator).AddressData.StreetTypes.Count() == 1);

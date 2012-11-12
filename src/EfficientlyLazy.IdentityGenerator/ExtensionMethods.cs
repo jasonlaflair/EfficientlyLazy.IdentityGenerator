@@ -6,12 +6,7 @@ namespace EfficientlyLazy.IdentityGenerator
 {
     internal static class ExtensionMethods
     {
-        private static readonly Random _random;
-
-        static ExtensionMethods()
-        {
-            _random = RandomCreator.GenerateCryptographicSeededRandom();
-        }
+        private static readonly RandomEngine _random = new RandomEngine();
 
         public static T GetRandom<T>(this IEnumerable<T> data, Func<T, bool> where)
         {
