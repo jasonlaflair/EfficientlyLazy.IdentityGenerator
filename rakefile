@@ -1,63 +1,92 @@
 require 'albacore'
 
-VERSION_NUMBER = ENV["version"] || '0.9.5.0'
-CONFIG = ENV["config"] || "Debug"
+$VERSION_NUMBER = ENV["version"] || '0.9.5.0'
+$CONFIG = ENV["config"] || "Debug"
 
-task :release => [:updateAssemblyInfo, :buildSolution, :runUnitTests, :mergeDemoApp, :copyOutputFiles, :buildDocumentation, :zipBinaries, :createNuspecFile, :createNugetPackage, :cleanup]
-task :default => [:updateAssemblyInfo, :buildSolution, :runUnitTests]
 
-desc "Zip"
-zip :zipBinaries do |zip|
-     zip.directories_to_zip "build"
-     zip.output_file = "EfficientlyLazy.IdentityGenerator.#{VERSION_NUMBER}.zip"
-     zip.output_path = "build"
+desc "Debug Build"
+task :default => [:setDebugConfigLevel, :updateAssemblyInfo, :buildSolution, :runUnitTests, :cleanup]
+
+desc "Create Release Build"
+task :release => [:setReleaseConfigLevel, :updateAssemblyInfo, :buildSolution, :buildDocumentation, :zipBinaries, :createNuspecFile, :createNugetPackage, :cleanup]
+
+task :setDebugConfigLevel do
+	$CONFIG = "Debug"
 end
 
-desc "Version build Documentation"
-task :versionDocs do
-     lines = ""
-     versionFile = "doc/EfficientlyLazy.IdentityGenerator.shfbproj"
-     File.open(versionFile, 'r') do |f|
-          lines = f.readlines
-     end
-      
-     File.open(versionFile, 'w') do |content|
-          lines.each do |line|
-               if line.include?("<SHFBSchemaVersion>")
-                    content.puts "    <SHFBSchemaVersion>#{VERSION_NUMBER}</SHFBSchemaVersion>"
-               else
-                    content.puts line
-               end
-	       end
-     end
+task :setReleaseConfigLevel do
+	$CONFIG = "Release"
 end
 
 task :cleanup do
-	FileUtils.rm_rf "build/content" if File.exists?("build/content")
-	FileUtils.rm_rf "build/lib" if File.exists?("build/lib")
-	FileUtils.rm_rf "build/tools" if File.exists?("build/tools")
-	FileUtils.rm_rf "build/EfficientlyLazy.IdentityGenerator.nuspec" if File.exists?("build/EfficientlyLazy.IdentityGenerator.nuspec")
+	FileUtils.rm_rf "Build/#{$CONFIG}" if File.exists?("Build/#{$CONFIG}")
+	FileUtils.rm_rf "Build/EfficientlyLazy.IdentityGenerator.nuspec" if File.exists?("Build/EfficientlyLazy.IdentityGenerator.nuspec")
+end
+
+desc "Version"
+assemblyinfo :updateAssemblyInfo do |asm|
+  asm.version = "#{$VERSION_NUMBER}"
+  asm.file_version = "#{$VERSION_NUMBER}"
+  asm.custom_attributes :AssemblyInformationalVersionAttribute => "#{$VERSION_NUMBER}", :AssemblyInformationalVersionAttribute => "#{$VERSION_NUMBER} (#{$CONFIG})"
+  asm.company_name = "LaFlair.NET"
+  asm.product_name = "EfficientlyLazy.IdentityGenerator for .NET"
+  asm.copyright = "Copyright (c) LaFlair.NET 2009-2012"
+  asm.output_file = "src/SharedAssemblyInfo.cs"
+  asm.com_visible = false
+end
+
+desc "build"
+msbuild :buildSolution do |msb|
+  msb.properties = { :configuration => $CONFIG }
+  msb.targets = [ :clean, :build ]
+  msb.solution = "src/EfficientlyLazy.IdentityGenerator.sln"
+  msb.verbosity = "minimal"
+  msb.other_switches :toolsVersion => 4.0
 end
 
 desc "XUnit Test Runner"
 xunit :runUnitTests do |xunit|
 	xunit.command = "tools/xunit/xunit.console.exe"
-	xunit.assembly = "src/EfficientlyLazy.IdentityGenerator.Tests/bin/#{CONFIG}/EfficientlyLazy.IdentityGenerator.Tests.dll"
+	xunit.assembly = "Build/#{$CONFIG}/tests/net35/EfficientlyLazy.IdentityGenerator.Tests.dll"
 end
 
-desc "copy"
-output :copyOutputFiles do |out|
-  out.from '.'
-  out.to 'build'
-  out.file "src/EfficientlyLazy.IdentityGenerator/bin/#{CONFIG}/EfficientlyLazy.IdentityGenerator.dll", :as=>'lib/net35/EfficientlyLazy.IdentityGenerator.dll'
-  out.file "src/EfficientlyLazy.IdentityGenerator/bin/#{CONFIG}/EfficientlyLazy.IdentityGenerator.xml", :as=>'lib/net35/EfficientlyLazy.IdentityGenerator.xml'
-  out.file "src/EfficientlyLazy.IdentityGenerator.UI/bin/#{CONFIG}/EfficientlyLazy.IdentityGenerator.UI.Merged.exe", :as=>'tools/net35/EfficientlyLazy.IdentityGenerator.UI.exe'
+
+msbuild :buildDocumentation do |msb|
+	lines = ""
+	versionFile = "doc/EfficientlyLazy.IdentityGenerator.shfbproj"
+	
+	File.open(versionFile, 'r') do |f|
+		lines = f.readlines
+	end
+
+	File.open(versionFile, 'w') do |content|
+		lines.each do |line|
+			if line.include?("<SHFBSchemaVersion>")
+				content.puts "    <SHFBSchemaVersion>#{$VERSION_NUMBER}</SHFBSchemaVersion>"
+			else
+				content.puts line
+			end
+		end
+	end
+
+	msb.properties = { :configuration => $CONFIG }
+	msb.targets = [ :clean, :build ]
+	msb.solution = versionFile
+	msb.verbosity = "minimal"
+	msb.other_switches :toolsVersion => 4.0
+end
+
+zip :zipBinaries do |zip|
+	 zip.directories_to_zip "Build/#{$CONFIG}/tools/net35"
+	 zip.additional_files "Build/#{$CONFIG}/content/net35/EfficientlyLazy.IdentityGenerator.chm"
+	 zip.output_file = "EfficientlyLazy.IdentityGenerator.v#{$VERSION_NUMBER}.zip"
+	 zip.output_path = "Build"
 end
 
 desc "create the nuget package"
 nuspec :createNuspecFile do |nuspec|
    nuspec.id="EfficientlyLazy.IdentityGenerator"
-   nuspec.version = "#{VERSION_NUMBER}"
+   nuspec.version = "#{$VERSION_NUMBER}"
    nuspec.authors = "Jason LaFlair"
    nuspec.owners = "Jason LaFlair"
    nuspec.description = ".Net library create random identities that include Name, Address, City, State, Zip, SSN and Date of Birth."
@@ -67,11 +96,10 @@ nuspec :createNuspecFile do |nuspec|
    nuspec.projectUrl = "https://github.com/jasonlaflair/EfficientlyLazy.IdentityGenerator"
    nuspec.working_directory = "build"
    nuspec.output_file = "EfficientlyLazy.IdentityGenerator.nuspec"
-   nuspec.tags = "security cryptography encryption AES configuration library random csharp hash data"
-   nuspec.file "lib\\net35\\EfficientlyLazy.IdentityGenerator.dll", "lib\\net35\\EfficientlyLazy.IdentityGenerator.dll"
-   nuspec.file "lib\\net35\\EfficientlyLazy.IdentityGenerator.xml", "lib\\net35\\EfficientlyLazy.IdentityGenerator.xml"
-   nuspec.file "tools\\net35\\EfficientlyLazy.IdentityGenerator.UI.exe", "tools\\net35\\EfficientlyLazy.IdentityGenerator.UI.exe"
-   nuspec.file "content\\net35\\EfficientlyLazy.IdentityGenerator.chm", "content\\net35\\EfficientlyLazy.IdentityGenerator.chm"
+   nuspec.tags = "identity generator random name address city state zip ssn dob"
+   nuspec.file "#{$CONFIG}\\lib\\net35\\EfficientlyLazy.IdentityGenerator.dll", "lib\\net35\\EfficientlyLazy.IdentityGenerator.dll"
+   nuspec.file "#{$CONFIG}\\lib\\net35\\EfficientlyLazy.IdentityGenerator.xml", "lib\\net35\\EfficientlyLazy.IdentityGenerator.xml"
+   nuspec.file "#{$CONFIG}\\content\\net35\\EfficientlyLazy.IdentityGenerator.chm", "content\\net35\\EfficientlyLazy.IdentityGenerator.chm"
 end
 
 desc "create the nuget package"
@@ -82,39 +110,4 @@ nugetpack :createNugetPackage do |nuget|
    nuget.output      = "build/"
 end
 
-desc "Merge"
-ilmerge :mergeDemoApp do |cfg|
-  cfg.command = 'tools\ILMerge\ILMerge.exe'
-  cfg.assemblies "src/EfficientlyLazy.IdentityGenerator.UI/bin/#{CONFIG}/EfficientlyLazy.IdentityGenerator.UI.exe", "src/EfficientlyLazy.IdentityGenerator.UI/bin/#{CONFIG}/EfficientlyLazy.IdentityGenerator.dll"
-  cfg.output = "src/EfficientlyLazy.IdentityGenerator.UI/bin/#{CONFIG}/EfficientlyLazy.IdentityGenerator.UI.Merged.exe"
-end
 
-desc "Version"
-assemblyinfo :updateAssemblyInfo do |asm|
-  asm.version = "#{VERSION_NUMBER}"
-  asm.file_version = "#{VERSION_NUMBER}"
-  asm.custom_attributes :AssemblyInformationalVersionAttribute => "#{VERSION_NUMBER}"
-  asm.company_name = "LaFlair.NET"
-  asm.product_name = "EfficientlyLazy.IdentityGenerator for .NET"
-  asm.copyright = "Copyright (c) LaFlair.NET 2009-2012"
-  asm.output_file = "src/SharedAssemblyInfo.cs"
-  asm.com_visible = false
-end
-
-desc "build Documentation"
-msbuild :buildDocumentation => :versionDocs do |msb|
-  msb.properties = { :configuration => CONFIG }
-  msb.targets = [ :clean, :build ]
-  msb.solution = "doc/EfficientlyLazy.IdentityGenerator.shfbproj"
-  msb.verbosity = "minimal"
-  msb.other_switches :toolsVersion => 4.0
-end
-
-desc "build"
-msbuild :buildSolution do |msb|
-  msb.properties = { :configuration => CONFIG }
-  msb.targets = [ :clean, :build ]
-  msb.solution = "src/EfficientlyLazy.IdentityGenerator.sln"
-  msb.verbosity = "minimal"
-  msb.other_switches :toolsVersion => 4.0
-end
